@@ -1,0 +1,2548 @@
+<!DOCTYPE html>
+<html lang="ht">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AyiPay Faz 3</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bl:#38bdf8;--vi:#6366f1;--nv:#0f172a;--nv2:#1e293b;--nv3:#334155;
+  --gr:#94a3b8;--gr2:#64748b;--gn:#22c55e;--rd:#ef4444;--yw:#f59e0b;
+  --grad:linear-gradient(135deg,#38bdf8,#6366f1)
+}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--nv);color:#fff;min-height:100vh}
+.hidden{display:none!important}
+
+#scr-load{position:fixed;inset:0;background:var(--nv);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;z-index:999}
+.ap-logo-big{display:flex;flex-direction:column;align-items:center;gap:14px}
+.ap-icon{width:80px;height:80px;background:var(--grad);border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:900;box-shadow:0 16px 50px rgba(56,189,248,.35)}
+.ap-name{font-size:34px;font-weight:800;letter-spacing:2px}
+.ap-name span{color:var(--bl)}
+.ap-sub{font-size:12px;color:var(--gr);letter-spacing:3px;text-transform:uppercase}
+.spin{width:36px;height:36px;border:3px solid rgba(56,189,248,.2);border-top-color:var(--bl);border-radius:50%;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+#scr-welcome{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px 24px;gap:36px}
+.w-logo{display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}
+.w-icon{width:60px;height:60px;background:var(--grad);border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;box-shadow:0 8px 28px rgba(56,189,248,.3)}
+.w-name{font-size:28px;font-weight:800}
+.w-name span{color:var(--bl)}
+.w-tag{font-size:13px;color:var(--gr)}
+.role-list{display:flex;flex-direction:column;gap:12px;width:100%;max-width:340px}
+.role-card{display:flex;align-items:center;gap:14px;padding:18px 20px;background:var(--nv2);border:1.5px solid rgba(255,255,255,.08);border-radius:16px;cursor:pointer;transition:all .2s;text-align:left}
+.role-card:hover{border-color:rgba(56,189,248,.4);background:rgba(56,189,248,.06);transform:translateY(-2px)}
+.role-card:active{transform:scale(.97)}
+.rc-ico{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.rc-ico.cl{background:rgba(56,189,248,.15)}
+.rc-ico.ma{background:rgba(99,102,241,.15)}
+.rc-ico.ad{background:rgba(245,158,11,.12)}
+.rc-info h3{font-size:15px;font-weight:700;margin-bottom:3px}
+.rc-info p{font-size:12px;color:var(--gr);line-height:1.4}
+.rc-arr{color:var(--gr);font-size:20px;margin-left:auto}
+.w-foot{font-size:11px;color:var(--gr2);text-align:center;letter-spacing:.5px}
+
+.scr-login{min-height:100vh;display:flex;flex-direction:column;padding:0 22px 40px}
+.login-hdr{display:flex;align-items:center;gap:12px;padding:18px 0 28px}
+.back{width:38px;height:38px;background:var(--nv2);border:1px solid rgba(255,255,255,.1);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;color:var(--gr);transition:all .2s}
+.back:hover{color:#fff}
+.lh-info h2{font-size:20px;font-weight:800}
+.lh-info p{font-size:13px;color:var(--gr);margin-top:2px}
+.login-body{display:flex;flex-direction:column;gap:18px;max-width:400px;width:100%;margin:0 auto}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:5px 12px;border-radius:20px;align-self:flex-start}
+.badge.cl{background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.25);color:var(--bl)}
+.badge.ma{background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.25);color:#a5b4fc}
+.badge.ad{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);color:var(--yw)}
+
+.ig{display:flex;flex-direction:column;gap:6px}
+.ig label{font-size:11px;font-weight:700;color:var(--gr);letter-spacing:1px;text-transform:uppercase}
+.inp{width:100%;padding:13px 16px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);border-radius:10px;color:#fff;font-size:15px;outline:none;transition:border-color .2s}
+.inp:focus{border-color:var(--bl);background:rgba(56,189,248,.06)}
+.inp::placeholder{color:var(--gr2)}
+
+.pin-row{display:flex;gap:8px;justify-content:center}
+.pc{width:46px;height:56px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);border-radius:10px;color:#fff;font-size:22px;font-weight:700;text-align:center;outline:none;transition:border-color .2s}
+.pc:focus{border-color:var(--bl);background:rgba(56,189,248,.06)}
+.pc.yw:focus{border-color:var(--yw);background:rgba(245,158,11,.06)}
+
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px 20px;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;transition:all .2s;letter-spacing:.3px}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-p{background:var(--grad);color:#fff;box-shadow:0 4px 20px rgba(56,189,248,.25)}
+.btn-o{background:transparent;color:var(--bl);border:1.5px solid rgba(56,189,248,.35)}
+.btn-o:hover{background:rgba(56,189,248,.08)}
+.btn-g{background:rgba(34,197,94,.12);color:var(--gn);border:1.5px solid rgba(34,197,94,.3)}
+.btn-r{background:rgba(239,68,68,.12);color:var(--rd);border:1.5px solid rgba(239,68,68,.3)}
+.btn-y{background:rgba(245,158,11,.12);color:var(--yw);border:1.5px solid rgba(245,158,11,.3)}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:var(--nv2);border-bottom:1px solid rgba(255,255,255,.06);position:sticky;top:0;z-index:50}
+.tb-left{display:flex;align-items:center;gap:10px}
+.tb-logo{font-size:18px;font-weight:800}
+.tb-logo span{color:var(--bl)}
+.tb-badge{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:3px 8px;border-radius:20px}
+.tb-badge.cl{background:rgba(56,189,248,.15);color:var(--bl)}
+.tb-badge.ma{background:rgba(99,102,241,.15);color:#a5b4fc}
+.tb-badge.ad{background:rgba(245,158,11,.12);color:var(--yw)}
+.tb-right{display:flex;gap:8px}
+.ib{width:36px;height:36px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:var(--gr);transition:all .2s}
+.ib:hover{color:#fff;border-color:rgba(255,255,255,.2)}
+
+.scr-dash{min-height:100vh;display:flex;flex-direction:column}
+.dash-body{flex:1;padding:20px;display:flex;flex-direction:column;gap:20px;max-width:500px;width:100%;margin:0 auto}
+
+.bal-card{background:var(--grad);border-radius:20px;padding:24px 22px;position:relative;overflow:hidden;box-shadow:0 12px 40px rgba(56,189,248,.25)}
+.bal-card::before{content:'';position:absolute;width:200px;height:200px;background:rgba(255,255,255,.08);border-radius:50%;top:-80px;right:-60px}
+.bal-card::after{content:'';position:absolute;width:140px;height:140px;background:rgba(255,255,255,.05);border-radius:50%;bottom:-50px;left:-30px}
+.bal-lbl{font-size:11px;font-weight:600;letter-spacing:2px;opacity:.8;text-transform:uppercase}
+.bal-amt{font-size:40px;font-weight:900;margin:8px 0 4px;letter-spacing:-1px}
+.bal-cur{font-size:13px;opacity:.75}
+.bal-id{font-size:11px;opacity:.6;margin-top:16px;letter-spacing:1px;font-family:monospace}
+.bal-status{font-size:11px;margin-top:12px;padding:6px 10px;border-radius:8px;background:rgba(255,255,255,.08)}
+.bal-status.ok{color:var(--gn)}
+.bal-status.bloke{color:var(--rd)}
+
+.stats-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stats-3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat-box{background:var(--nv2);border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:14px 10px;text-align:center}
+.stat-val{font-size:22px;font-weight:800;color:var(--bl)}
+.stat-lbl{font-size:10px;color:var(--gr);margin-top:3px;text-transform:uppercase;letter-spacing:.5px}
+
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.sec-hdr h3{font-size:12px;font-weight:700;color:var(--gr);letter-spacing:1.5px;text-transform:uppercase}
+
+.qa-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.qa{display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 12px;background:var(--nv2);border:1.5px solid rgba(255,255,255,.07);border-radius:14px;cursor:pointer;transition:all .2s}
+.qa:hover{border-color:rgba(56,189,248,.35);background:rgba(56,189,248,.06)}
+.qa:active{transform:scale(.97)}
+.qa-ico{font-size:24px}
+.qa-lbl{font-size:12px;font-weight:600;color:var(--gr);text-align:center}
+
+.menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mc{background:var(--nv2);border:1.5px solid rgba(255,255,255,.07);border-radius:16px;padding:18px 14px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;gap:8px}
+.mc:hover{border-color:rgba(56,189,248,.35);transform:translateY(-2px)}
+.mc:active{transform:scale(.97)}
+.mc-ico{font-size:26px}
+.mc-title{font-size:13px;font-weight:700}
+.mc-sub{font-size:11px;color:var(--gr);line-height:1.4}
+
+.tx-list{display:flex;flex-direction:column;gap:8px}
+.tx-item{display:flex;align-items:center;gap:12px;padding:13px 15px;background:var(--nv2);border:1px solid rgba(255,255,255,.06);border-radius:14px;transition:border-color .2s}
+.tx-item:hover{border-color:rgba(255,255,255,.15)}
+.tx-ico{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.tx-ico.db{background:rgba(239,68,68,.12)}
+.tx-ico.cr{background:rgba(34,197,94,.12)}
+.tx-ico.rc{background:rgba(56,189,248,.12)}
+.tx-inf{flex:1;min-width:0}
+.tx-desc{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx-date{font-size:11px;color:var(--gr);margin-top:2px}
+.tx-amt{font-size:14px;font-weight:700;flex-shrink:0}
+.tx-amt.db{color:var(--rd)}
+.tx-amt.cr{color:var(--gn)}
+
+.terminal{background:var(--nv2);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:22px 18px}
+.terminal h3{font-size:15px;font-weight:700;margin-bottom:16px}
+.amt-disp{background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);border-radius:14px;padding:18px;text-align:center;margin-bottom:14px}
+.amt-val{font-size:44px;font-weight:900;color:var(--bl);letter-spacing:-1px}
+.amt-cur{font-size:13px;color:var(--gr);margin-top:4px}
+.numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.np{padding:16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:12px;font-size:18px;font-weight:700;color:#fff;cursor:pointer;text-align:center;transition:all .15s;user-select:none}
+.np:hover{background:rgba(56,189,248,.12);border-color:rgba(56,189,248,.3)}
+.np:active{transform:scale(.94)}
+.np.del{color:var(--gr);font-size:20px}
+.np.z2{grid-column:span 2}
+
+.empty{text-align:center;padding:30px 20px;color:var(--gr2);font-size:13px}
+.empty-ico{font-size:36px;margin-bottom:10px}
+
+.mo{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:200;display:flex;align-items:flex-end}
+.mo-box{background:var(--nv2);border:1px solid rgba(255,255,255,.1);border-radius:24px 24px 0 0;width:100%;max-width:500px;margin:0 auto;padding:24px 22px 44px;max-height:92vh;overflow-y:auto;animation:su .3s cubic-bezier(.34,1.56,.64,1)}
+@keyframes su{from{transform:translateY(100%)}}
+.mo-handle{width:40px;height:4px;background:rgba(255,255,255,.15);border-radius:2px;margin:0 auto 20px}
+.mo-title{font-size:18px;font-weight:800;margin-bottom:18px}
+.mo-form{display:flex;flex-direction:column;gap:14px}
+
+.suc-box{background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.2);border-radius:14px;padding:16px;margin-bottom:18px}
+.suc-row{margin-bottom:10px}
+.suc-row:last-child{margin-bottom:0}
+.suc-lbl{font-size:11px;color:var(--gr);margin-bottom:3px}
+.suc-val{font-size:14px;font-weight:700}
+.suc-val.bl{color:var(--bl);font-family:monospace;letter-spacing:1px}
+.suc-val.gn{color:var(--gn)}
+.suc-val.code{font-size:20px;letter-spacing:4px;font-family:monospace;font-weight:900}
+
+.pc-info{background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.2);border-radius:12px;padding:14px 16px;margin-bottom:18px}
+.pc-mach{font-size:14px;font-weight:700}
+.pc-amt{font-size:26px;font-weight:900;color:var(--rd);margin-top:4px}
+.pc-desc{font-size:13px;color:var(--gr);text-align:center;margin-bottom:18px;line-height:1.5}
+
+.user-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px;margin-bottom:10px}
+.user-card h4{font-size:14px;font-weight:700;margin-bottom:4px}
+.user-card p{font-size:12px;color:var(--gr);line-height:1.6}
+.user-card .uc-id{color:var(--bl);font-family:monospace;font-size:12px;margin-top:6px}
+.user-card .uc-bal{color:var(--gn);font-weight:700;font-size:13px;margin-top:6px}
+.user-card .uc-status{display:inline-block;font-size:11px;padding:4px 8px;border-radius:6px;margin-top:8px;font-weight:700}
+.user-card .uc-status.ok{background:rgba(34,197,94,.2);color:var(--gn)}
+.user-card .uc-status.bloke{background:rgba(239,68,68,.2);color:var(--rd)}
+
+.qr-container{text-align:center;padding:20px;background:rgba(255,255,255,.04);border-radius:14px}
+.qr-img{max-width:100%;width:200px;height:200px;margin:10px auto}
+.qr-info{font-size:12px;color:var(--gr);margin-top:12px}
+
+.ret-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.ret-info h4{font-size:14px;font-weight:700}
+.ret-info p{font-size:12px;color:var(--gr);margin-top:2px}
+.ret-amt{font-size:16px;font-weight:800;color:var(--bl)}
+.ret-btns{display:flex;gap:8px}
+.ret-btn{padding:6px 12px;font-size:12px;border:none;border-radius:8px;cursor:pointer;font-weight:700;transition:all .2s}
+.ret-btn.ok{background:rgba(34,197,94,.2);color:var(--gn)}
+.ret-btn.ok:hover{background:rgba(34,197,94,.3)}
+.ret-btn.no{background:rgba(239,68,68,.2);color:var(--rd)}
+.ret-btn.no:hover{background:rgba(239,68,68,.3)}
+
+#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(120px);background:var(--nv2);border:1px solid rgba(255,255,255,.12);color:#fff;padding:11px 22px;border-radius:30px;font-size:14px;font-weight:500;z-index:9999;transition:transform .3s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;box-shadow:0 8px 30px rgba(0,0,0,.4);max-width:92vw;text-align:center;pointer-events:none}
+#toast.show{transform:translateX(-50%) translateY(0)}
+#toast.success{border-color:rgba(34,197,94,.4);color:var(--gn)}
+#toast.error{border-color:rgba(239,68,68,.4);color:var(--rd)}
+#toast.info{border-color:rgba(56,189,248,.4);color:var(--bl)}
+
+.pdf-prev{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.pdf-side{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:16px;text-align:center;min-height:220px;display:flex;flex-direction:column;justify-content:center;font-size:11px;color:var(--gr)}
+.pdf-title{font-size:11px;color:var(--gr);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px}
+
+/* ═══ TABS ═══ */
+.tab-nav{display:flex;gap:8px;padding:12px 20px;background:var(--nv2);border-bottom:1px solid rgba(255,255,255,.06);overflow-x:auto;white-space:nowrap;scroll-behavior:smooth}
+.tab-nav::-webkit-scrollbar{height:4px}
+.tab-nav::-webkit-scrollbar-track{background:rgba(255,255,255,.05)}
+.tab-nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:2px}
+.tab-btn{padding:8px 16px;background:transparent;border:1.5px solid rgba(255,255,255,.1);color:var(--gr);border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;transition:all .2s;flex-shrink:0}
+.tab-btn:hover{border-color:rgba(56,189,248,.3);color:#fff}
+.tab-btn.active{background:var(--bl);border-color:var(--bl);color:#fff}
+.tab-content{display:none}
+.tab-content.active{display:block}
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<div id="scr-load">
+  <div class="ap-logo-big">
+    <div class="ap-icon">AP</div>
+    <div class="ap-name"><span>Ayi</span>Pay</div>
+    <div class="ap-sub">Faz 3 · LocalStorage</div>
+  </div>
+  <div class="spin"></div>
+</div>
+
+<div id="scr-welcome" class="hidden">
+  <div class="w-logo">
+    <div class="w-icon">AP</div>
+    <div class="w-name"><span>Ayi</span>Pay</div>
+    <div class="w-tag">Peye fasil, peye ayisyen 🇭🇹</div>
+  </div>
+  <div class="role-list">
+    <div class="role-card" onclick="goLogin('cl')">
+      <div class="rc-ico cl">👤</div>
+      <div class="rc-info"><h3>Kliyan</h3><p>Balans, QR, bloke, PIN, istwa</p></div>
+      <div class="rc-arr">›</div>
+    </div>
+    <div class="role-card" onclick="goLogin('ma')">
+      <div class="rc-ico ma">🏪</div>
+      <div class="rc-info"><h3>Machand</h3><p>Scane QR, mande retrè, balans</p></div>
+      <div class="rc-arr">›</div>
+    </div>
+    <div class="role-card" onclick="goLogin('ad')">
+      <div class="rc-ico ad">🔐</div>
+      <div class="rc-info"><h3>Administratè</h3><p>Kreye, jere, apwouve retrè</p></div>
+      <div class="rc-arr">›</div>
+    </div>
+  </div>
+  <p class="w-foot">💾 LocalStorage · AyiPay v3.0</p>
+</div>
+
+<!-- LOGIN SCREENS (same as Faz 2, plus new features) -->
+<div id="scr-login-cl" class="scr-login hidden">
+  <div class="login-hdr">
+    <div class="back" onclick="goWelcome()">‹</div>
+    <div class="lh-info"><h2>Koneksyon Kliyan</h2><p>Antre enfò kont ou</p></div>
+  </div>
+  <div class="login-body">
+    <span class="badge cl">👤 Kliyan</span>
+    <div class="ig"><label>Imel</label>
+      <input class="inp" type="email" id="cl-email" placeholder="ou@mail.com" autocomplete="email"></div>
+    <div class="ig"><label>Modpas</label>
+      <input class="inp" type="password" id="cl-pass" placeholder="••••••••"></div>
+    <button class="btn btn-p" id="btn-cl-login" onclick="loginClient()">Konekte</button>
+    <div style="text-align:center;font-size:12px;color:var(--gr);margin-top:10px">
+      <p>Oswa kreye kont:</p>
+      <button class="btn btn-o" style="margin-top:8px" onclick="openMo('mo-signup-cl')">🆕 Nouvo Kont Kliyan</button>
+    </div>
+  </div>
+</div>
+
+<div id="scr-login-ma" class="scr-login hidden">
+  <div class="login-hdr">
+    <div class="back" onclick="goWelcome()">‹</div>
+    <div class="lh-info"><h2>Koneksyon Machand</h2><p>Antre enfò boutik ou</p></div>
+  </div>
+  <div class="login-body">
+    <span class="badge ma">🏪 Machand</span>
+    <div class="ig"><label>Imel</label>
+      <input class="inp" type="email" id="ma-email" placeholder="boutik@mail.com" autocomplete="email"></div>
+    <div class="ig"><label>Modpas</label>
+      <input class="inp" type="password" id="ma-pass" placeholder="••••••••"></div>
+    <button class="btn btn-p" id="btn-ma-login" onclick="loginMachand()">Konekte</button>
+  </div>
+</div>
+
+<div id="scr-login-ad" class="scr-login hidden">
+  <div class="login-hdr">
+    <div class="back" onclick="goWelcome()">‹</div>
+    <div class="lh-info"><h2>Aksè Admin</h2><p>1492</p></div>
+  </div>
+  <div class="login-body">
+    <span class="badge ad">🔐 Admin</span>
+    <div class="ig">
+      <label>Kòd Sekrè Admin (4 chif)</label>
+      <div class="pin-row">
+        <input class="pc yw" type="password" maxlength="1" inputmode="numeric" id="ad0" oninput="pnav('ad',0)">
+        <input class="pc yw" type="password" maxlength="1" inputmode="numeric" id="ad1" oninput="pnav('ad',1)">
+        <input class="pc yw" type="password" maxlength="1" inputmode="numeric" id="ad2" oninput="pnav('ad',2)">
+        <input class="pc yw" type="password" maxlength="1" inputmode="numeric" id="ad3" oninput="pnav('ad',3)">
+      </div>
+    </div>
+    <button class="btn btn-y" id="btn-ad-login" onclick="loginAdmin()">Antre</button>
+  </div>
+</div>
+
+<!-- DASH KLIYAN -->
+<div id="scr-dash-cl" class="scr-dash hidden">
+  <div class="topbar">
+    <div class="tb-left">
+      <div class="tb-logo"><span>Ayi</span>Pay</div>
+      <span class="tb-badge cl">Kliyan</span>
+    </div>
+    <div class="tb-right">
+      <div class="ib" onclick="logout()">⏻</div>
+    </div>
+  </div>
+  <div class="dash-body">
+    <div class="bal-card">
+      <div class="bal-lbl">Balans Mwen</div>
+      <div class="bal-amt" id="cl-balance">0</div>
+      <div class="bal-cur">Goud Ayisyen (HTG)</div>
+      <div class="bal-id" id="cl-carte-id">AP-HTG-000000</div>
+      <div class="bal-status ok" id="cl-status">✓ Kart Aktif</div>
+    </div>
+    <div>
+      <div class="sec-hdr"><h3>Aksyon</h3></div>
+      <div class="qa-grid">
+        <div class="qa" onclick="showQR()">
+          <div class="qa-ico">📷</div><div class="qa-lbl">Montre QR</div>
+        </div>
+        <div class="qa" onclick="openMo('mo-bloke-cl')">
+          <div class="qa-ico">🔒</div><div class="qa-lbl">Bloke Carte</div>
+        </div>
+        <div class="qa" onclick="openMo('mo-reset-pin')">
+          <div class="qa-ico">🔑</div><div class="qa-lbl">Reset PIN</div>
+        </div>
+        <div class="qa" onclick="openMo('mo-istwa-cl')">
+          <div class="qa-ico">📊</div><div class="qa-lbl">Istwa</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="sec-hdr"><h3>Dènye Tranzaksyon</h3></div>
+      <div class="tx-list" id="cl-tx-list">
+        <div class="empty"><div class="empty-ico">📭</div>Pa gen tranzaksyon toujou</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DASH MACHAND -->
+<div id="scr-dash-ma" class="scr-dash hidden">
+  <div class="topbar">
+    <div class="tb-left">
+      <div class="tb-logo"><span>Ayi</span>Pay</div>
+      <span class="tb-badge ma">Machand</span>
+    </div>
+    <div class="tb-right">
+      <div class="ib" onclick="logout()">⏻</div>
+    </div>
+  </div>
+  <div class="dash-body">
+    <div class="stats-2">
+      <div class="stat-box">
+        <div class="stat-val" id="ma-balance">0</div>
+        <div class="stat-lbl">Balans HTG</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val" id="ma-today">0</div>
+        <div class="stat-lbl">Vant Jodi</div>
+      </div>
+    </div>
+    <div class="terminal">
+      <h3>💳 Terminal Paiement</h3>
+      <div class="amt-disp">
+        <div class="amt-val" id="term-amt">0</div>
+        <div class="amt-cur">HTG</div>
+      </div>
+      <div class="numpad">
+        <div class="np" onclick="np('1')">1</div><div class="np" onclick="np('2')">2</div><div class="np" onclick="np('3')">3</div>
+        <div class="np" onclick="np('4')">4</div><div class="np" onclick="np('5')">5</div><div class="np" onclick="np('6')">6</div>
+        <div class="np" onclick="np('7')">7</div><div class="np" onclick="np('8')">8</div><div class="np" onclick="np('9')">9</div>
+        <div class="np z2" onclick="np('0')">0</div>
+        <div class="np del" onclick="npDel()">⌫</div>
+      </div>
+      <button class="btn btn-p" onclick="startScanQR()">📱 Scane QR Carte</button>
+    </div>
+    <div>
+      <div class="sec-hdr"><h3>Retrè</h3></div>
+      <button class="btn btn-o" onclick="openMo('mo-demand-ret')">💵 Mande Retrè Lajan</button>
+    </div>
+    <div>
+      <div class="sec-hdr"><h3>Dènye Vant</h3></div>
+      <div class="tx-list" id="ma-tx-list">
+        <div class="empty"><div class="empty-ico">🏪</div>Pa gen vant toujou</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DASH ADMIN -->
+<div id="scr-dash-ad" class="scr-dash hidden">
+  <div class="topbar">
+    <div class="tb-left">
+      <div class="tb-logo"><span>Ayi</span>Pay</div>
+      <span class="tb-badge ad">Admin</span>
+    </div>
+    <div class="tb-right">
+      <div class="ib" onclick="logoutAdmin()">⏻</div>
+    </div>
+  </div>
+  <div class="dash-body">
+    <div class="stats-3">
+      <div class="stat-box"><div class="stat-val" id="ad-ncl">0</div><div class="stat-lbl">Kliyan</div></div>
+      <div class="stat-box"><div class="stat-val" id="ad-nma">0</div><div class="stat-lbl">Machand</div></div>
+      <div class="stat-box"><div class="stat-val" id="ad-ntx">0</div><div class="stat-lbl">Tranzaksyon</div></div>
+    </div>
+    
+    <div class="tab-nav">
+      <button class="tab-btn active" onclick="switchTab('ad-tab-1')">⚙️ Aksyon</button>
+      <button class="tab-btn" onclick="switchTab('ad-tab-2')">💸 Retraits</button>
+      <button class="tab-btn" onclick="switchTab('ad-tab-3')">👥 Kliyan</button>
+      <button class="tab-btn" onclick="switchTab('ad-tab-4')">🏪 Machand</button>
+      <button class="tab-btn" onclick="switchTab('ad-tab-5')">🎫 Carte</button>
+      <button class="tab-btn" onclick="switchTab('ad-tab-6')">📋 Aktivite</button>
+    </div>
+    
+    <div id="ad-tab-1" class="tab-content active">
+      <div class="sec-hdr"><h3>Aksyon</h3></div>
+      <div class="menu-grid">
+        <div class="mc" onclick="openMo('mo-new-cl')"><div class="mc-ico">👤</div><div class="mc-title">Nouvo Kliyan</div><div class="mc-sub">Kreye kont</div></div>
+        <div class="mc" onclick="openMo('mo-new-ma')"><div class="mc-ico">🏪</div><div class="mc-title">Nouvo Machand</div><div class="mc-sub">Anrejistre</div></div>
+        <div class="mc" onclick="openMo('mo-recharge')"><div class="mc-ico">💳</div><div class="mc-title">Rechaje Carte</div><div class="mc-sub">Mete lajan</div></div>
+        <div class="mc" onclick="openMo('mo-recharge-ma')"><div class="mc-ico">💰</div><div class="mc-title">Rechaje Machand</div><div class="mc-sub">Ajoute balans</div></div>
+      </div>
+    </div>
+    
+    <div id="ad-tab-2" class="tab-content">
+      <div class="sec-hdr"><h3>Apwobasyon Retrè</h3></div>
+      <div id="ad-retraits-list" style="margin-bottom:20px">
+        <div class="empty"><div class="empty-ico">💸</div>Pa gen retrè pou apwouve</div>
+      </div>
+    </div>
+    
+    <div id="ad-tab-3" class="tab-content">
+      <div class="sec-hdr"><h3>👥 Lis Kliyan</h3></div>
+      <div id="ad-list-cl" style="margin-bottom:20px">
+        <div class="empty"><div class="empty-ico">👤</div>Pa gen kliyan</div>
+      </div>
+    </div>
+    
+    <div id="ad-tab-4" class="tab-content">
+      <div class="sec-hdr"><h3>🏪 Lis Machand</h3></div>
+      <div id="ad-list-ma" style="margin-bottom:20px">
+        <div class="empty"><div class="empty-ico">🏪</div>Pa gen machand</div>
+      </div>
+    </div>
+    
+    <div id="ad-tab-5" class="tab-content">
+      <div class="sec-hdr"><h3>🎫 Lis Carte</h3></div>
+      <div id="ad-list-carte" style="margin-bottom:20px">
+        <div class="empty"><div class="empty-ico">💳</div>Pa gen carte</div>
+      </div>
+    </div>
+    
+    <div id="ad-tab-6" class="tab-content">
+      <div class="sec-hdr"><h3>Dènye Aktivite</h3></div>
+      <div class="tx-list" id="ad-tx-list">
+        <div class="empty"><div class="empty-ico">📋</div>Pa gen aktivite toujou</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODALS (simplified from Faz 2, with LocalStorage) -->
+<div id="mo-signup-cl" class="mo hidden" onclick="closeMo('mo-signup-cl')">
+  <div class="mo-box" onclick="event.stopPropagation()">
+    <div class="mo-handle"></div>
+    <div class="mo-title">🆕 Kreye Kont Kliyan</div>
+    <div class="mo-form">
+      <div class="ig"><label>Non Konplè</label><input class="inp" id="sc-nom" placeholder="Jean Baptiste Pierre"></div>
+      <div class="ig"><label>Imel</label><input class="inp" type="email" id="sc-email" placeholder="jean@mail.com"></div>
+      <div class="ig"><label>Telefòn</label><input class="inp" type="tel" id="sc-tel" placeholder="+509 XXXX XXXX"></div>
+      <div class="ig"><label>Modpas (min. 6 karaktè)</label><input class="inp" type="password" id="sc-pass" placeholder="••••••••"></div>
+      <button class="btn btn-p" id="btn-sc" onclick="signupClient()">✨ Kreye Kont</button>
+      <button class="btn btn-o" onclick="closeMo('mo-signup-cl')">Anile</button>
+    </div>
+  </div>
+</div>
+
+<div id="mo-qr" class="mo hidden" onclick="closeMo('mo-qr')">
+  <div class="mo-box" onclick="event.stopPropagation()">
+    <div class="mo-handle"></div>
+    <div class="mo-title">📷 QR Code Carte Ou</div>
+    <div class="qr-container" id="qr-content">
+      <p style="color:var(--gr);margin:20px 0">Ap jenere...</p>
+    </div>
+    <div style="text-align:center;font-size:12px;color:var(--gr);margin-top:16px">
+      <p>Montre QR sa a bay machand pou peye</p>
+      <p style="margin-top:6px;font-family:monospace" id="qr-id-display">AP-HTG-000000</p>
+    </div>
+    <button class="btn btn-o" style="margin-top:16px" onclick="closeMo('mo-qr')">Fèmen</button>
+  </div>
+</div>
+
+<div id="mo-bloke-cl" class="mo hidden" onclick="closeMo('mo-bloke-cl')">
+  <div class="mo-box" onclick="event.stopPropagation()">
+    <div class="mo-handle"></div>
+    <div class="mo-title">🔒 Bloke Carte Ou</div>
+    <p style="color:var(--gr);margin-bottom:20px;line-height:1.6">Bloke carte ou pou evite fwod. Ou ka debloke l apre.</p>
+    <button class="btn btn-r" onclick="blokeKart()">✓ Konfime Bloke</button>
+    <button class="btn btn-o" style="margin-top:10px" onclick="closeMo('mo-bloke-cl')">Anile</button>
+  </div>
+</div>
+
+<div id="mo-debloke-cl" class="mo hidden" onclick="closeMo('mo-debloke-cl')">
+  <div class="mo-box" onclick="event.stopPropagation()">
+    <div class="mo-handle"></div>
+    <div class="mo-title">🔓 Debloke Carte Ou</div>
+    <p style="color:var(--gr);margin-bottom:20px;line-height:1.6">Debloke carte ou pou ka peye ankò.</p>
+    <button class="btn btn-g" onclick="deblokeKart()">✓ Konfime Debloke</button>
+    <button class="btn btn-o" style="margin-top:10px" onclick="closeMo('mo-debloke-cl')">Anile</button>
+  </div>
+</div>
+
+<div id="mo-reset-pin" class="mo hidden" onclick="closeMo('mo-reset-pin')">
+  <div class="mo-box" onclick="event.stopPropagation()">
+    <div class="mo-handle"></div>
+    <div class="mo-title">🔑 Reset PIN Ou</div>
+    <p style="color:var(--gr);margin-bottom:20px;line-height:1.6">Antre yon PIN 6 chif nouvo pou konfime paiement.</p>
+    <div class="ig"><label>PIN Nouvo (6 chif)</label>
+      <div class="pin-row" style="margin-bottom:6px">
+        <input class="pc" type="password" maxlength="1" inputmode="numeric" id="np0" oninput="pnav('np',0)">
+        <input class="pc" type="password" maxlength="1" inputmode="numeric" id="np1" oninput="pnav('np',1)">
+        <input class="pc" type="password" maxlength="1" inputmode="numeric" id="np2" oninput="pnav('np',2)">
+        <input class="pc" type="password" maxlength="1" inputmode="numeric" id="np3" oninput="pnav('np',3)">
+        <input class="pc" type="password" maxlength="1" inputmode="numeric" id="np4" oninput="pnav('np',4)">
+        <input class="pc" type="password" maxlength="1" inputmode="numeric" id="np5" oninput="pnav('np',5)">
+      </div>
+    </div>
+    <button class="btn btn-p" id="btn-reset-pin" onclick="resetPin()">✓ Konfime PIN Nouvo</button>
+    <button class="btn btn-o" style="margin-top:10px" onclick="closeMo('mo-reset-pin')">Anile</button>
+  </div>
+</div>
+
+<div id="mo-istwa-cl" class="mo hidden" onclick="closeMo('mo-istwa-cl')">
+  <div class="mo-box" onclick="event.stopPropagation()">
+    <div class="mo-handle"></div>
+    <div class="mo-title">📊 Istwa Konplè</div>
+    <div class="tx-list" id="istwa-cl-list" style="margin-top:16px">
+      <div class="empty"><div class="empty-ico">📭</div>Pa gen tranzaksyon</div>
+    </div>
+    <button class="btn btn-o" style="margin-top:16px" onclick="closeMo('mo-istwa-cl')">Fèmen</button>
+  </div>
+</div>
+
+<div id="mo-scan-qr" class="mo hidden" onclick="closeMo('mo-scan-qr')">
+  <div class="mo-box" onclick="event.stopPropagation()">
+    <div class="mo-handle"></div>
+    <div class="mo-title">📱 Scane QR Carte</div>
+    <p style="color:var(--gr);margin-bottom:20px;line-height:1.6">Chwazi metod pou chache kart kliyan.</p>
+    
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+      <button class="btn btn-p" onclick="openMerchantCamera()" style="padding:12px">📸 Kamera</button>
+      <button class="btn btn-o" onclick="toggleManualEntry()" style="padding:12px">⌨️ Manuel</button>
+    </div>
+    
+    <div id="manual-entry-section" style="display:none">
+      <div class="ig"><label>ID Carte</label><input class="inp" id="scan-id" placeholder="AP-HTG-00234" style="text-transform:uppercase"></div>
+      <button class="btn btn-p" onclick="proceedScan()">✓ Kontinye Paiement</button>
+    </div>
+    
+    <div id="camera-view-section" style="display:none">
+      <video id="merchant-video" style="width:100%;border-radius:8px;background:#000;margin-bottom:10px"></video>
+      <button class="btn btn-p" onclick="captureCardImage()" style="margin-bottom:5px">📷 Kapte</button>
+      <button class="btn btn-o" onclick="closeMerchantCamera()">Fèmen</button>
+    </div>
+    
+    <button class="btn btn-o" style="margin-top:10px" onclick="closeMo('mo-scan-qr')">Anile</button>
+  </div>
+</div>
+
+<div id="mo-qr-scanned" class="mo hidden" onclick="closeMo('mo-qr-scanned')">
+  <div class="mo-box" onclick="event.stopPropagation()">
+    <div class="mo-handle"></div>
+    <div class="mo-title">✅ QR Scane!</div>
+    <div class="suc-box">
+      <div class="suc-row"><div class="suc-lbl">Kliyan</div><div class="suc-val" id="qr-cl-name">—</div></div>
+      <div class="suc-row"><div class="suc-lbl">Balans Kliyan</div><div class="suc-val gn" id="qr-cl-bal">0 HTG</div></div>
+    </div>
+    <div class="ig" style="margin:16px 0">
+      <label>Montan (HTG)</label>
+      <input type="number" class="inp" id="qr-charge-amt" placeholder="0" min="1">
+    </div>
+    <button class="btn btn-p" onclick="demandeMachantCharge()">💰 Demande Paiement</button>
+    <button class="btn btn-o" style="margin-top:10px" onclick="closeMo('mo-qr-scanned')">Fèmen</button>
+  </div>
+</div>
+
+<div id="mo-pin-pay" class="mo hidden">
+  <div class="mo-box" onclick="event.stopPropagation()">
+    <div class="mo-handle"></div>
+    <div class="mo-title" style="text-align:center">🔐 Konfime Paiement</div>
+    <div class="pc-info">
+      <div class="pc-mach" id="pin-mach">Boutik</div>
+      <div class="pc-amt" id="pin-amt">0 HTG</div>
+    </div>
+    <p class="pc-desc">Antre PIN 6 chif ou pou konfime tranzaksyon sa</p>
+    <div class="pin-row" style="margin-bottom:20px">
+      <input class="pc" type="password" maxlength="1" inputmode="numeric" id="pp0" oninput="pnav('pp',0)">
+      <input class="pc" type="password" maxlength="1" inputmode="numeric" id="pp1" oninput="pnav('pp',1)">
+      <input class="pc" type="password" maxlength="1" inputmode="numeric" id="pp2" oninput="pnav('pp',2)">
+      <input class="pc" type="password" maxlength="1" inputmode="numeric" id="pp3" oninput="pnav('pp',3)">
+      <input class="pc" type="password" maxlength="1" inputmode="numeric" id="pp4" oninput="pnav('pp',4)">
+      <input class="pc" type="password" maxlength="1" inputmode="numeric" id="pp5" oninput="pnav('pp',5)">
+    </div>
+    <button class="btn btn-p" onclick="confirmPay()">Konfime</button>
+    <button class="btn btn-o" style="margin-top:10px" onclick="closeMo('mo-pin-pay')">Anile</button>
+  </div>
+</div>
+
+<div id="mo-demand-ret" class="mo hidden" onclick="closeMo('mo-demand-ret')">
+  <div class="mo-box" onclick="event.stopPropagation()">
+    <div class="mo-handle"></div>
+    <div class="mo-title">💵 Mande Retrè</div>
+    <p style="color:var(--gr);margin-bottom:16px;line-height:1.6">Kote ou vle resevwa lajan ou? Admin ap apwouve.</p>
+    <div class="ig"><label>Montan Retrè (HTG)</label><input class="inp" type="number" id="ret-amt" placeholder="Balans ou" min="1"></div>
+    <div class="ig"><label>Metòd Paiement</label><select class="inp" id="ret-method" style="cursor:pointer"><option value="">Chwazi metòd</option><option value="moncash">MonCash</option><option value="natcash">NatCash</option><option value="dirèk">Dirèk</option></select></div>
+    <div class="ig"><label>Nimewo Telefòn / Kont</label><input class="inp" id="ret-contact" placeholder="+509 XXXX XXXX"></div>
+    <button class="btn btn-p" id="btn-ret" onclick="demandeRetrè()">✓ Mande Retrè</button>
+    <button class="btn btn-o" style="margin-top:10px" onclick="closeMo('mo-demand-ret')">Anile</button>
+  </div>
+</div>
+
+<div id="mo-new-cl" class="mo hidden" onclick="closeMo('mo-new-cl')">
+  <div class="mo-box" onclick="event.stopPropagation()">
+    <div class="mo-handle"></div>
+    <div class="mo-title">👤 Nouvo Kliyan (Admin)</div>
+    <div class="mo-form">
+      <div class="ig"><label>Non Konplè</label><input class="inp" id="nc-nom" placeholder="Jean Baptiste"></div>
+      <div class="ig"><label>Imel</label><input class="inp" type="email" id="nc-email" placeholder="jean@mail.com"></div>
+      <div class="ig"><label>Telefòn</label><input class="inp" type="tel" id="nc-tel" placeholder="+509 XXXX XXXX"></div>
+      <div class="ig"><label>Modpas</label><input class="inp" type="password" id="nc-pass" placeholder="••••••••"></div>
+      <div class="ig"><label>Balans Inisyal (HTG)</label><input class="inp" type="number" id="nc-bal" placeholder="0" value="0" min="0"></div>
+      <button class="btn btn-p" id="btn-nc" onclick="createClientAdmin()">✨ Kreye Kont + Carte</button>
+      <button class="btn btn-o" onclick="closeMo('mo-new-cl')">Anile</button>
+    </div>
+  </div>
+</div>
+
+<div id="mo-success-cl" class="mo hidden">
+  <div class="mo-box" onclick="event.stopPropagation()">
+    <div class="mo-handle"></div>
+    <div style="text-align:center;margin-bottom:20px"><div style="font-size:50px;margin-bottom:10px">✅</div><div style="font-size:18px;font-weight:800">Kont Kreye!</div></div>
+    <div class="suc-box">
+      <div class="suc-row"><div class="suc-lbl">Non</div><div class="suc-val" id="s-nom">—</div></div>
+      <div class="suc-row"><div class="suc-lbl">ID Carte</div><div class="suc-val bl" id="s-id">—</div></div>
+      <div class="suc-row"><div class="suc-lbl">Kòd Aktivasyon</div><div class="suc-val code" id="s-code">—</div></div>
+      <div class="suc-row"><div class="suc-lbl">Balans</div><div class="suc-val gn" id="s-bal">0 HTG</div></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <button class="btn btn-p" onclick="exportCartePDF()">📕 Ekspote PDF</button>
+      <button class="btn btn-p" onclick="exportCarteDOCX()">📄 Ekspote DOCX</button>
+      <button class="btn btn-o" onclick="generateQR()">📸 Jenere QR Code</button>
+      <button class="btn btn-o" onclick="closeMo('mo-success-cl')">Fèmen</button>
+    </div>
+  </div>
+</div>
+
+<div id="mo-new-ma" class="mo hidden" onclick="closeMo('mo-new-ma')">
+  <div class="mo-box" onclick="event.stopPropagation()">
+    <div class="mo-handle"></div>
+    <div class="mo-title">🏪 Nouvo Machand (Admin)</div>
+    <div class="mo-form">
+      <div class="ig"><label>Non Boutik</label><input class="inp" id="nm-boutik" placeholder="Boutik Marie"></div>
+      <div class="ig"><label>Non Propriétè</label><input class="inp" id="nm-nom" placeholder="Marie Jean"></div>
+      <div class="ig"><label>Imel</label><input class="inp" type="email" id="nm-email" placeholder="boutik@mail.com"></div>
+      <div class="ig"><label>Telefòn</label><input class="inp" type="tel" id="nm-tel" placeholder="+509 XXXX XXXX"></div>
+      <div class="ig"><label>Modpas</label><input class="inp" type="password" id="nm-pass" placeholder="••••••••"></div>
+      <button class="btn btn-p" id="btn-nm" onclick="createMachandAdmin()">✨ Anrejistre Machand</button>
+      <button class="btn btn-o" onclick="closeMo('mo-new-ma')">Anile</button>
+    </div>
+  </div>
+</div>
+
+<div id="mo-recharge" class="mo hidden" onclick="closeMo('mo-recharge')">
+  <div class="mo-box" onclick="event.stopPropagation()">
+    <div class="mo-handle"></div>
+    <div class="mo-title">💳 Rechaje Carte (Admin)</div>
+    <div class="mo-form">
+      <div class="ig"><label>ID Carte</label><input class="inp" id="rch-id" placeholder="AP-HTG-00234" style="text-transform:uppercase"></div>
+      <div class="ig"><label>Montan HTG</label><input class="inp" type="number" id="rch-amt" placeholder="1000" min="1"></div>
+      <button class="btn btn-p" id="btn-rch" onclick="doRechargeAdmin()">✅ Konfime Rechaj</button>
+      <button class="btn btn-o" onclick="closeMo('mo-recharge')">Anile</button>
+    </div>
+  </div>
+</div>
+
+<div id="mo-recharge-ma" class="mo hidden" onclick="closeMo('mo-recharge-ma')">
+  <div class="mo-box" onclick="event.stopPropagation()">
+    <div class="mo-handle"></div>
+    <div class="mo-title">💰 Rechaje Machand</div>
+    <div class="mo-form">
+      <div class="ig"><label>Email Machand</label><input class="inp" id="rch-ma-email" placeholder="machand@boutik.ht"></div>
+      <div class="ig"><label>Montan HTG</label><input class="inp" type="number" id="rch-ma-amt" placeholder="5000" min="1"></div>
+      <button class="btn btn-p" id="btn-rch-ma" onclick="doRechargeMachand()">✅ Rechaje</button>
+      <button class="btn btn-o" onclick="closeMo('mo-recharge-ma')">Anile</button>
+    </div>
+  </div>
+</div>
+
+<div id="mo-list-cl" class="mo hidden" onclick="closeMo('mo-list-cl')">
+  <div class="mo-box" onclick="event.stopPropagation()">
+    <div class="mo-handle"></div>
+    <div class="mo-title">👥 Lis Kliyan</div>
+    <div id="list-cl-body"><div class="empty"><div class="empty-ico">👤</div>Pa gen kliyan</div></div>
+    <button class="btn btn-o" style="margin-top:16px" onclick="closeMo('mo-list-cl')">Fèmen</button>
+  </div>
+</div>
+
+<!-- POLLING SETTINGS MODAL -->
+<div id="mo-polling" class="mo hidden" onclick="closeMo('mo-polling')">
+  <div class="mo-box" onclick="event.stopPropagation()">
+    <div class="mo-handle"></div>
+    <div class="mo-title">🔄 Polling Configuration</div>
+    <p style="color:var(--gr);margin-bottom:16px;font-size:12px">Configure real-time sync settings</p>
+    
+    <div class="ig">
+      <label>🌐 Platform</label>
+      <select class="inp" id="polling-platform" onchange="changePlatform()">
+        <option value="github">GitHub Pages</option>
+        <option value="gitlab">GitLab Pages</option>
+        <option value="render">Render</option>
+        <option value="netlify">Netlify</option>
+        <option value="custom">Custom Server</option>
+      </select>
+    </div>
+    
+    <div class="ig">
+      <label>📍 Database URL</label>
+      <input class="inp" id="polling-url" placeholder="https://..." style="font-size:11px">
+    </div>
+    
+    <div class="ig">
+      <label>⏱️ Polling Interval (ms)</label>
+      <input class="inp" type="number" id="polling-interval" min="1000" max="10000" step="500" value="2000">
+    </div>
+    
+    <div class="ig" style="display:none" id="github-token-section">
+      <label>🔐 GitHub Token (Optional)</label>
+      <input class="inp" id="github-token" type="password" placeholder="ghp_..." style="font-size:11px">
+    </div>
+    
+    <div class="ig" style="display:none" id="gitlab-token-section">
+      <label>🔐 GitLab Token (Optional)</label>
+      <input class="inp" id="gitlab-token" type="password" placeholder="glpat-..." style="font-size:11px">
+    </div>
+    
+    <button class="btn btn-p" onclick="savePollingConfig()">✅ Save Config</button>
+    <button class="btn btn-o" onclick="closeMo('mo-polling')">Anile</button>
+    
+    <div style="margin-top:16px;padding:12px;background:rgba(56,189,248,.1);border-radius:8px;font-size:11px;color:var(--gr)">
+      <strong>Status:</strong> <span id="polling-status">Stopped ⏸️</span><br>
+      <strong>Synced:</strong> <span id="polling-synced">Never</span>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   AYIPAY FAZ 3 — LOCALSTORAGE (Pèmanan sou Telefòn)
+═══════════════════════════════════════════════════════════════ */
+
+/* LocalStorage Keys */
+var LS_KLIYAN = 'ap_kliyan';
+var LS_MACHAND = 'ap_machand';
+var LS_TX = 'ap_tx';
+var LS_RETRAITS = 'ap_retraits';
+var LS_ADMIN = 'ap_admin';
+
+/* Load from LocalStorage */
+function loadDB() {
+  return {
+    kliyan:  JSON.parse(localStorage.getItem(LS_KLIYAN) || '[]'),
+    machand: JSON.parse(localStorage.getItem(LS_MACHAND) || '[]'),
+    tx:      JSON.parse(localStorage.getItem(LS_TX) || '[]'),
+    retraits: JSON.parse(localStorage.getItem(LS_RETRAITS) || '[]')
+  };
+}
+
+/* Save to LocalStorage */
+function saveDB(db) {
+  localStorage.setItem(LS_KLIYAN, JSON.stringify(db.kliyan));
+  localStorage.setItem(LS_MACHAND, JSON.stringify(db.machand));
+  localStorage.setItem(LS_TX, JSON.stringify(db.tx));
+  localStorage.setItem(LS_RETRAITS, JSON.stringify(db.retraits));
+  
+  // 📤 AUTO UPLOAD TO CLOUD
+  if (typeof pollingEnabled !== 'undefined' && pollingEnabled) {
+    uploadToCloud();
+  }
+}
+
+var DB = loadDB();
+var ADMIN_CODE = '1492';
+var STATE = { role:null, user:null, termAmt:'0', pendingTx:null, scannedKliyan:null };
+
+
+/* TOAST */
+var _tt;
+function toast(msg, type, dur) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + (type||'info');
+  clearTimeout(_tt);
+  _tt = setTimeout(function(){ el.className=''; }, dur||3000);
+}
+
+/* SCREENS */
+function hideAll() {
+  document.querySelectorAll('[id^="scr-"]').forEach(function(el){ el.classList.add('hidden'); });
+}
+function show(id) { hideAll(); document.getElementById(id).classList.remove('hidden'); }
+function goWelcome() { STATE.role=null; STATE.user=null; show('scr-welcome'); }
+function goLogin(role) { show('scr-login-'+role); }
+
+/* MODALS */
+function openMo(id) {
+  document.getElementById(id).classList.remove('hidden');
+  if (id==='mo-istwa-cl') renderIstwaClient();
+  if (id==='mo-list-cl') renderListClientAdmin();
+  if (id==='mo-qr-scanned') renderScannedInfo();
+}
+function closeMo(id) { document.getElementById(id).classList.add('hidden'); }
+
+/* PIN NAV */
+function pnav(prefix, i) {
+  var el = document.getElementById(prefix+i);
+  var max = prefix==='ad'?3:5;
+  if (el && el.value && i < max) {
+    var next = document.getElementById(prefix+(i+1));
+    if (next) next.focus();
+  }
+}
+function getPin(prefix, len) {
+  var s=''; len=len||6;
+  for(var i=0;i<len;i++){ var el=document.getElementById(prefix+i); s+=el?el.value:''; }
+  return s;
+}
+function clearPin(prefix, len) {
+  len=len||6;
+  for(var i=0;i<len;i++){ var el=document.getElementById(prefix+i); if(el) el.value=''; }
+}
+
+/* HELPERS */
+function setBtn(id, load, txt) {
+  var btn = document.getElementById(id);
+  if(!btn) return;
+  btn.disabled = load;
+  if(load) btn.innerHTML='<div style="width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .8s linear infinite;margin:0 auto"></div>';
+  else if(txt) btn.textContent=txt;
+}
+function genID() {
+  return 'AP-HTG-'+Math.floor(Math.random()*99999).toString().padStart(5,'0');
+}
+function genCode() {
+  var c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',r='AP-';
+  for(var i=0;i<4;i++) r+=c[Math.floor(Math.random()*c.length)];
+  r+='-';
+  for(var i=0;i<4;i++) r+=c[Math.floor(Math.random()*c.length)];
+  return r;
+}
+function fmtDate(ts) {
+  var d=new Date(ts);
+  return d.getDate().toString().padStart(2,'0')+'/'+(d.getMonth()+1).toString().padStart(2,'0')+'/'+d.getFullYear()+' '+d.getHours()+':'+d.getMinutes().toString().padStart(2,'0');
+}
+function clrForm(ids) {
+  ids.forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+}
+
+/* ═══ TABS ═══ */
+function switchTab(tabId) {
+  var tabs = document.querySelectorAll('.tab-content');
+  var buttons = document.querySelectorAll('.tab-btn');
+  
+  tabs.forEach(function(t){ t.classList.remove('active'); });
+  buttons.forEach(function(b){ b.classList.remove('active'); });
+  
+  document.getElementById(tabId).classList.add('active');
+  event.target.classList.add('active');
+}
+
+function refreshStats() {
+  document.getElementById('ad-ncl').textContent = DB.kliyan.length;
+  document.getElementById('ad-nma').textContent = DB.machand.length;
+  document.getElementById('ad-ntx').textContent = DB.tx.length;
+  renderAdTx();
+  renderRetraits();
+  renderListClientsAdmin();
+  renderListMerchantsAdmin();
+  renderListCardsAdmin();
+}
+
+function renderAdTx() {
+  var el = document.getElementById('ad-tx-list');
+  if(!DB.tx.length){ el.innerHTML='<div class="empty"><div class="empty-ico">📋</div>Pa gen aktivite toujou</div>'; return; }
+  var last = DB.tx.slice().reverse().slice(0,8);
+  el.innerHTML='<div class="tx-list">'+last.map(function(tx){
+    var isRch = tx.type==='recharge';
+    return '<div class="tx-item">'+
+      '<div class="tx-ico '+(isRch?'rc':'db')+'">'+(isRch?'⬆️':'💳')+'</div>'+
+      '<div class="tx-inf"><div class="tx-desc">'+(tx.clNom||'—')+(tx.maNom?' → '+tx.maNom:'')+'</div>'+
+      '<div class="tx-date">'+fmtDate(tx.date)+'</div></div>'+
+      '<div class="tx-amt '+(isRch?'cr':'db')+'">'+(isRch?'+':'-')+tx.montan.toLocaleString()+' HTG</div></div>';
+  }).join('')+'</div>';
+}
+
+function renderListClientsAdmin() {
+  var el = document.getElementById('ad-list-cl');
+  if(!DB.kliyan.length){ el.innerHTML='<div class="empty"><div class="empty-ico">👤</div>Pa gen kliyan</div>'; return; }
+  el.innerHTML = '<div class="tx-list">'+DB.kliyan.map(function(k){
+    return '<div class="tx-item">'+
+      '<div class="tx-ico rc">👤</div>'+
+      '<div class="tx-inf"><div class="tx-desc">'+k.nom+'</div>'+
+      '<div class="tx-date">'+k.email+'</div></div>'+
+      '<div class="tx-amt gn">'+k.balans.toLocaleString()+' HTG</div></div>';
+  }).join('')+'</div>';
+}
+
+function renderListMerchantsAdmin() {
+  var el = document.getElementById('ad-list-ma');
+  if(!DB.machand.length){ el.innerHTML='<div class="empty"><div class="empty-ico">🏪</div>Pa gen machand</div>'; return; }
+  el.innerHTML = '<div class="tx-list">'+DB.machand.map(function(m){
+    return '<div class="tx-item">'+
+      '<div class="tx-ico db">🏪</div>'+
+      '<div class="tx-inf"><div class="tx-desc">'+m.nomBoutik+'</div>'+
+      '<div class="tx-date">'+m.email+'</div></div>'+
+      '<div class="tx-amt gn">'+m.balans.toLocaleString()+' HTG</div></div>';
+  }).join('')+'</div>';
+}
+
+function renderListCardsAdmin() {
+  var el = document.getElementById('ad-list-carte');
+  if(!DB.kliyan.length){ el.innerHTML='<div class="empty"><div class="empty-ico">💳</div>Pa gen carte</div>'; return; }
+  el.innerHTML = '<div class="tx-list">'+DB.kliyan.map(function(k){
+    return '<div class="tx-item" style="display:flex;align-items:center;justify-content:space-between;gap:10px">'+
+      '<div style="display:flex;align-items:center;gap:10px;flex:1">'+
+      '<div class="tx-ico rc">🎫</div>'+
+      '<div class="tx-inf"><div class="tx-desc">'+k.carteID+'</div>'+
+      '<div class="tx-date">'+k.nom+'</div></div>'+
+      '</div>'+
+      '<button class="btn btn-o" style="padding:6px 12px;font-size:11px;white-space:nowrap" onclick="downloadCardDocx('+k.id+')">⬇️ Download</button>'+
+      '<div class="tx-amt '+(k.bloke?'db':'gn')+'" style="min-width:80px;text-align:right">'+(k.bloke?'🔒 BLOKE':'✓ AKTIF')+'</div>'+
+      '</div>';
+  }).join('')+'</div>';
+}
+
+function downloadCardDocx(cardId) {
+  var kliyan = DB.kliyan.find(function(k){ return k.id === cardId; });
+  if(!kliyan){ toast('Kart pa egziste','error'); return; }
+  
+  try {
+    var nom = kliyan.nom.toUpperCase();
+    var carteID = kliyan.carteID;
+    var code = kliyan.code;
+    
+    // Create proper HTML document that Word can open
+    var html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kart - ${carteID}</title>
+  <style>
+    @page { size: landscape; margin: 10mm; }
+    * { margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; }
+    body { 
+      font-family: Arial, Calibri, sans-serif; 
+      background: #000a0f;
+      padding: 30px;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container { width: 100%; max-width: 1000px; }
+    .title {
+      text-align: center;
+      color: #38bdf8;
+      font-weight: bold;
+      font-size: 18px;
+      margin-bottom: 30px;
+      letter-spacing: 2px;
+    }
+    .card {
+      border: 3px solid #38bdf8;
+      background: linear-gradient(135deg, #0f2847 0%, #0F4A8F 100%);
+      color: white;
+      padding: 40px 30px;
+      border-radius: 12px;
+      margin-bottom: 50px;
+      page-break-after: always;
+      min-height: 350px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .card-back {
+      border: 3px solid #38bdf8;
+      background: linear-gradient(135deg, #0a0a14 0%, #1A1A2E 100%);
+      color: white;
+      padding: 40px 30px;
+      border-radius: 12px;
+      min-height: 350px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 25px;
+    }
+    .logo span:first-child { color: white; }
+    .logo span:last-child { color: #38bdf8; }
+    .name {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 20px;
+      letter-spacing: 1px;
+    }
+    .field {
+      margin: 12px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .field-label {
+      color: #96b4d2;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .field-value {
+      font-size: 13px;
+      font-weight: bold;
+      color: #38bdf8;
+      font-family: 'Courier New', monospace;
+    }
+    .card-number {
+      font-size: 18px;
+      color: #c8dcff;
+      font-family: 'Courier New', monospace;
+      letter-spacing: 2px;
+      margin-top: 15px;
+    }
+    .footer {
+      margin-top: 30px;
+      text-align: center;
+      color: #96b4d2;
+      font-size: 10px;
+    }
+    .signature-area {
+      text-align: center;
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+    }
+    .signature-label {
+      color: #96b4d2;
+      font-size: 11px;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+    .signature-line {
+      border-bottom: 1px solid #c8dcff;
+      width: 200px;
+      margin: 0 auto;
+    }
+    .code-section {
+      margin-bottom: 20px;
+    }
+    .code-label {
+      color: #38bdf8;
+      font-weight: bold;
+      font-size: 12px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .code-value {
+      font-size: 16px;
+      font-weight: bold;
+      color: #38bdf8;
+      font-family: 'Courier New', monospace;
+      letter-spacing: 1px;
+    }
+    .pin-field {
+      margin: 15px 0;
+    }
+    .pin-label {
+      color: #96b4d2;
+      font-size: 11px;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+    .pin-value {
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      letter-spacing: 3px;
+      color: white;
+    }
+    .instructions {
+      margin: 20px 0;
+      padding: 15px;
+      background: rgba(56, 189, 248, 0.1);
+      border-left: 3px solid #38bdf8;
+      border-radius: 4px;
+    }
+    .instructions-title {
+      color: #38bdf8;
+      font-weight: bold;
+      font-size: 12px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .instruction-item {
+      font-size: 11px;
+      color: white;
+      margin: 6px 0;
+      line-height: 1.6;
+    }
+    .contact {
+      text-align: center;
+      color: #96b4d2;
+      font-size: 9px;
+      margin-top: 20px;
+    }
+    @page {
+      size: landscape;
+      margin: 0.5in;
+    }
+    @media print {
+      body { 
+        background: white; 
+        padding: 0; 
+        page-break-before: avoid;
+        page-break-after: avoid;
+      }
+      .container { 
+        max-width: 100%; 
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+      }
+      .card, .card-back { 
+        page-break-inside: avoid;
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="title">✦ RECTO — DEVAN KART A ✦</div>
+    
+    <div class="card">
+      <div>
+        <div class="logo"><span>AP</span> <span>AyiPay</span></div>
+        <div class="name">${nom}</div>
+        
+        <div class="field">
+          <span class="field-label">ID Carte</span>
+          <span class="field-value">${carteID}</span>
+        </div>
+        
+        <div class="card-number">•••• •••• •••• 7823</div>
+        
+        <div class="field" style="margin-top: 20px; justify-content: space-between;">
+          <span class="field-label">VALID / EKSPIRE: 01/25 / 01/28</span>
+          <span class="field-label" style="color: #96b4d2;">CVV: ***</span>
+        </div>
+      </div>
+      
+      <div class="footer">
+        AyiPay™ - Sistèm Peman Dijital
+      </div>
+    </div>
+    
+    <div class="title">✦ VERSO — DEYÈ KART A ✦</div>
+    
+    <div class="card-back">
+      <div>
+        <div class="signature-area">
+          <div class="signature-label">Siyat / Signature</div>
+          <div class="signature-line"></div>
+        </div>
+        
+        <div class="code-section">
+          <div class="code-label">Kòd Aktivasyon</div>
+          <div class="code-value">${code}</div>
+        </div>
+        
+        <div class="pin-field">
+          <div class="pin-label">PIN Pèsonèl</div>
+          <div class="pin-value">__ __ __ __ __ __</div>
+        </div>
+        
+        <div class="instructions">
+          <div class="instructions-title">Kijan Pou Itilize</div>
+          <div class="instruction-item">① Telecharje App AyiPay sou telefon ou</div>
+          <div class="instruction-item">② Konekte ak ID Carte ou (${carteID})</div>
+          <div class="instruction-item">③ Kreye PIN 6 chif pèsonèl ou</div>
+          <div class="instruction-item">④ Si carte pedi, bloke li nan App la</div>
+        </div>
+      </div>
+      
+      <div class="contact">
+        📞 +509 40097947 | 📧 support@ayipay.ht
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+    
+    // Create Blob and download
+    var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.href = url;
+    link.download = 'Kart-' + carteID + '.html';
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+    
+    setTimeout(function(){
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }, 500);
+    
+    toast('📥 Kart telechaje! (HTML - ouvri avèk Word oswa Imprimante)','ok');
+  } catch(err) {
+    console.error('Error:', err);
+    toast('Erè telechaje','error');
+  }
+}
+function signupClient() {
+  var nom    = document.getElementById('sc-nom').value.trim();
+  var email  = document.getElementById('sc-email').value.trim();
+  var tel    = document.getElementById('sc-tel').value.trim();
+  var pass   = document.getElementById('sc-pass').value;
+  
+  if(!nom||!email||!pass){ toast('Ranpli tout champ yo','error'); return; }
+  if(pass.length<6){ toast('Modpas min. 6 karaktè','error'); return; }
+  if(DB.kliyan.find(function(k){ return k.email===email; })){ toast('Imel sa déjà egziste','error'); return; }
+  
+  setBtn('btn-sc',true);
+  var carteID = genID();
+  var kliyan  = { id:Date.now(), nom:nom, email:email, pass:pass, tel:tel, carteID:carteID, balans:0, pin:null, bloke:false, createdAt:Date.now() };
+  DB.kliyan.push(kliyan);
+  saveDB(DB);
+  
+  toast('Kont kreye! Konekte mèsye','success');
+  closeMo('mo-signup-cl');
+  clrForm(['sc-nom','sc-email','sc-tel','sc-pass']);
+  setBtn('btn-sc',false,'✨ Kreye Kont');
+  goWelcome();
+}
+
+/* ═══ LOGIN ═══ */
+function loginAdmin() {
+  var code = getPin('ad', 4);
+  if(code.length<4){ toast('Antre 4 chif yo','error'); return; }
+  if(code!==ADMIN_CODE){ toast('Kòd enkorèk','error'); clearPin('ad',4); return; }
+  STATE.role='admin';
+  refreshStats();
+  show('scr-dash-ad');
+  toast('Byenveni Admin!','success');
+  clearPin('ad',4);
+  startPolling(); // 🔄 START POLLING
+}
+
+function loginClient() {
+  var email = document.getElementById('cl-email').value.trim();
+  var pass  = document.getElementById('cl-pass').value;
+  if(!email||!pass){ toast('Ranpli tout champ yo','error'); return; }
+  setBtn('btn-cl-login',true);
+  var found = DB.kliyan.find(function(k){ return k.email===email && k.pass===pass; });
+  if(!found){ toast('Imel oswa modpas enkorèk','error'); setBtn('btn-cl-login',false,'Konekte'); return; }
+  STATE.role='client'; STATE.user=found;
+  document.getElementById('cl-balance').textContent = found.balans.toLocaleString();
+  document.getElementById('cl-carte-id').textContent = found.carteID;
+  document.getElementById('cl-status').innerHTML = found.bloke ? '✗ Kart Bloke' : '✓ Kart Aktif';
+  document.getElementById('cl-status').className = found.bloke ? 'bal-status bloke' : 'bal-status ok';
+  renderClTx(found.carteID);
+  show('scr-dash-cl');
+  toast('Byenveni '+found.nom.split(' ')[0]+'!','success');
+  setBtn('btn-cl-login',false,'Konekte');
+  startPolling(); // 🔄 START POLLING
+}
+
+function renderClTx(carteID) {
+  var el = document.getElementById('cl-tx-list');
+  var txs = DB.tx.filter(function(t){ return t.carteID===carteID; }).reverse();
+  if(!txs.length){ el.innerHTML='<div class="empty"><div class="empty-ico">📭</div>Pa gen tranzaksyon toujou</div>'; return; }
+  el.innerHTML='<div class="tx-list">'+txs.slice(0,10).map(function(tx){
+    // Check transaction type
+    var isRch = tx.type==='recharge';
+    var isWithdrawal = tx.type==='retrè';
+    
+    // Set colors and signs based on type
+    var amtClass = isRch ? 'cr' : 'db';
+    var amtSign = isRch ? '+' : '-';
+    var icon = isRch ? '⬆️' : (isWithdrawal ? '💸' : '💸');
+    var desc = tx.maNom || (isRch ? 'Recharge' : (isWithdrawal ? 'Retrè' : 'Paiement'));
+    
+    return '<div class="tx-item">'+
+      '<div class="tx-ico '+amtClass+'">'+icon+'</div>'+
+      '<div class="tx-inf"><div class="tx-desc">'+desc+'</div>'+
+      '<div class="tx-date">'+fmtDate(tx.date)+'</div></div>'+
+      '<div class="tx-amt '+amtClass+'">'+amtSign+tx.montan.toLocaleString()+' HTG</div></div>';
+  }).join('')+'</div>';
+}
+
+function loginMachand() {
+  var email = document.getElementById('ma-email').value.trim();
+  var pass  = document.getElementById('ma-pass').value;
+  if(!email||!pass){ toast('Ranpli tout champ yo','error'); return; }
+  setBtn('btn-ma-login',true);
+  var found = DB.machand.find(function(m){ return m.email===email && m.pass===pass; });
+  if(!found){ toast('Imel oswa modpas enkorèk','error'); setBtn('btn-ma-login',false,'Konekte'); return; }
+  STATE.role='machand'; STATE.user=found;
+  document.getElementById('ma-balance').textContent = found.balans.toLocaleString();
+  renderMaTx(found.id);
+  show('scr-dash-ma');
+  toast('Byenveni '+found.nomBoutik+'!','success');
+  setBtn('btn-ma-login',false,'Konekte');
+  startPolling(); // 🔄 START POLLING
+}
+
+function renderMaTx(maId) {
+  var el = document.getElementById('ma-tx-list');
+  var txs = DB.tx.filter(function(t){ return t.maId===maId; }).reverse();
+  if(!txs.length){ el.innerHTML='<div class="empty"><div class="empty-ico">🏪</div>Pa gen vant toujou</div>'; return; }
+  var today = new Date().toDateString();
+  var todayCnt = txs.filter(function(t){ return new Date(t.date).toDateString()===today; }).length;
+  document.getElementById('ma-today').textContent = todayCnt;
+  el.innerHTML='<div class="tx-list">'+txs.slice(0,10).map(function(tx){
+    return '<div class="tx-item">'+
+      '<div class="tx-ico cr">✅</div>'+
+      '<div class="tx-inf"><div class="tx-desc">'+(tx.clNom||'Kliyan')+'</div>'+
+      '<div class="tx-date">'+fmtDate(tx.date)+'</div></div>'+
+      '<div class="tx-amt cr">+'+tx.montan.toLocaleString()+' HTG</div></div>';
+  }).join('')+'</div>';
+}
+
+function logout() {
+  stopPolling(); // ⏸️ STOP POLLING
+  STATE.role=null; STATE.user=null;
+  goWelcome(); toast('Ou dekonekte','info');
+}
+
+function logoutAdmin() {
+  stopPolling(); // ⏸️ STOP POLLING
+  STATE.role=null; STATE.user=null;
+  goWelcome(); toast('Admin dekonekte','info');
+}
+
+/* ═══ QR ═══ */
+function generateQR(text) {
+  var lines = [
+    '██████████████████████████████',
+    '██ ██ ██ ██ ██ ██ ██ ██ ██ ██',
+    '██ ██ ██ ██ ██ ██ ██ ██ ██ ██',
+    '██████████████████████████████',
+    '██  '+text.substring(0,8).padEnd(8,' ')+'  ██',
+    '██  '+text.substring(8,16).padEnd(8,' ')+'  ██',
+    '██  '+text.substring(16,24).padEnd(8,' ')+'  ██',
+    '██████████████████████████████'
+  ];
+  return lines.join('\n');
+}
+
+function showQR() {
+  if(!STATE.user) return;
+  var qrData = 'AP:'+STATE.user.carteID+':'+STATE.user.nom.substring(0,3).toUpperCase();
+  var qr = generateQR(qrData);
+  var html = '<div class="qr-img" style="white-space:pre;font-family:monospace;font-size:8px;line-height:1">'+qr+'</div>';
+  document.getElementById('qr-content').innerHTML = html;
+  document.getElementById('qr-id-display').textContent = STATE.user.carteID;
+  openMo('mo-qr');
+}
+
+/* ═══ BLOKE / DEBLOKE ═══ */
+function blokeKart() {
+  if(!STATE.user) return;
+  STATE.user.bloke = true;
+  DB.kliyan = DB.kliyan.map(function(k){ if(k.id===STATE.user.id) k.bloke=true; return k; });
+  saveDB(DB);
+  document.getElementById('cl-status').innerHTML = '✗ Kart Bloke';
+  document.getElementById('cl-status').className = 'bal-status bloke';
+  closeMo('mo-bloke-cl');
+  openMo('mo-debloke-cl');
+  toast('Carte ou bloke','success');
+}
+
+function deblokeKart() {
+  if(!STATE.user) return;
+  STATE.user.bloke = false;
+  DB.kliyan = DB.kliyan.map(function(k){ if(k.id===STATE.user.id) k.bloke=false; return k; });
+  saveDB(DB);
+  document.getElementById('cl-status').innerHTML = '✓ Kart Aktif';
+  document.getElementById('cl-status').className = 'bal-status ok';
+  closeMo('mo-debloke-cl');
+  toast('Carte ou debloke','success');
+}
+
+/* ═══ RESET PIN ═══ */
+function resetPin() {
+  if(!STATE.user) return;
+  var pin = getPin('np',6);
+  if(pin.length<6){ toast('Antre PIN 6 chif','error'); return; }
+  if(!/^\d{6}$/.test(pin)){ toast('PIN dwe gen sèlman chif','error'); return; }
+  setBtn('btn-reset-pin',true);
+  STATE.user.pin = pin;
+  DB.kliyan = DB.kliyan.map(function(k){ if(k.id===STATE.user.id) k.pin=pin; return k; });
+  saveDB(DB);
+  toast('PIN ou chanje avèk siksè','success');
+  closeMo('mo-reset-pin');
+  clearPin('np',6);
+  setBtn('btn-reset-pin',false,'✓ Konfime PIN Nouvo');
+}
+
+/* ═══ NUMPAD ═══ */
+function np(v) {
+  if(STATE.termAmt==='0') STATE.termAmt='';
+  if(STATE.termAmt.length>=7) return;
+  STATE.termAmt+=v;
+  document.getElementById('term-amt').textContent=parseInt(STATE.termAmt).toLocaleString();
+}
+function npDel() {
+  STATE.termAmt=STATE.termAmt.slice(0,-1)||'0';
+  document.getElementById('term-amt').textContent=parseInt(STATE.termAmt).toLocaleString();
+}
+
+/* ═══ SCANE QR ═══ */
+function startScanQR() {
+  openMo('mo-scan-qr');
+}
+
+function proceedScan() {
+  var id = document.getElementById('scan-id').value.trim().toUpperCase();
+  if(!id){ toast('Antre ID carte oswa scane','error'); return; }
+  var kl = DB.kliyan.find(function(k){ return k.carteID===id; });
+  if(!kl){ toast('Carte pa egziste','error'); return; }
+  if(kl.bloke){ toast('Carte bloke','error'); return; }
+  STATE.scannedKliyan = kl;
+  closeMo('mo-scan-qr');
+  clrForm(['scan-id']);
+  clrForm(['qr-charge-amt']);
+  renderScannedInfo();
+  openMo('mo-qr-scanned');
+}
+
+function renderScannedInfo() {
+  if(!STATE.scannedKliyan) return;
+  var k = STATE.scannedKliyan;
+  document.getElementById('qr-cl-name').textContent = k.nom;
+  document.getElementById('qr-cl-bal').textContent = k.balans.toLocaleString()+' HTG';
+}
+
+/* ═══ PAIEMENT ═══ */
+function demandeMachantCharge() {
+  var montan = parseInt(document.getElementById('qr-charge-amt').value);
+  if(!montan || montan<=0){ toast('Antre montan valid','error'); return; }
+  if(!STATE.scannedKliyan){ toast('Pa gen kliyan scane','error'); return; }
+  if(STATE.scannedKliyan.balans < montan){ toast('Kliyan pa gen ase lajan','error'); return; }
+  
+  STATE.termAmt = montan;
+  
+  document.getElementById('pin-mach').textContent = STATE.user ? STATE.user.nomBoutik : 'Boutik';
+  document.getElementById('pin-amt').textContent = montan.toLocaleString()+' HTG';
+  
+  clearPin('pp',6);
+  closeMo('mo-qr-scanned');
+  openMo('mo-pin-pay');
+}
+
+function confirmPay() {
+  var pin = getPin('pp',6);
+  if(pin.length<6){ toast('Antre PIN 6 chif','error'); return; }
+  
+  var montan = parseInt(STATE.termAmt);
+  var kl = STATE.scannedKliyan;
+  
+  if(!kl){ toast('Pa gen kliyan scane','error'); return; }
+  
+  // If client doesn't have PIN yet, set it now (first payment)
+  if(!kl.pin) {
+    kl.pin = pin;  // Save PIN on first use
+  } else {
+    // Validate PIN if already set
+    if(kl.pin !== pin){ 
+      toast('PIN enkorèk','error'); 
+      clearPin('pp',6); 
+      return; 
+    }
+  }
+  
+  if(kl.balans < montan){ toast('Balans pa sifi','error'); return; }
+  
+  // Deduit from client
+  kl.balans -= montan;
+  
+  // Add to merchant
+  if(STATE.user) {
+    STATE.user.balans += montan;
+  }
+  
+  // Update database - kliyan
+  DB.kliyan = DB.kliyan.map(function(k){ 
+    if(k.carteID === kl.carteID) {
+      k.balans = kl.balans;
+      k.pin = kl.pin;  // Save PIN (new or existing)
+    }
+    return k;
+  });
+  
+  // Update database - machand
+  if(STATE.user) {
+    DB.machand = DB.machand.map(function(m){ 
+      if(m.id === STATE.user.id) {
+        m.balans = STATE.user.balans;
+      }
+      return m;
+    });
+  }
+  
+  // Record transaction
+  DB.tx.push({ 
+    id: Date.now(), 
+    type: 'achat', 
+    montan: montan,
+    clNom: kl.nom, 
+    maNom: STATE.user ? STATE.user.nomBoutik : '—',
+    maId: STATE.user ? STATE.user.id : null,
+    carteID: kl.carteID, 
+    date: Date.now(), 
+    statut: 'konplete'
+  });
+  
+  saveDB(DB);
+  
+  // Close modal and show success
+  closeMo('mo-pin-pay');
+  toast(montan.toLocaleString() + ' HTG transfere! ✅', 'success');
+  
+  // Update UI
+  if(STATE.user) {
+    if(document.getElementById('ma-balance')) {
+      document.getElementById('ma-balance').textContent = STATE.user.balans.toLocaleString() + ' HTG';
+    }
+    renderMaTx(STATE.user.id);
+  }
+  
+  // Reset state
+  STATE.termAmt = '0';
+  if(document.getElementById('term-amt')) {
+    document.getElementById('term-amt').textContent = '0 HTG';
+  }
+  STATE.scannedKliyan = null;
+  clearPin('pp',6);
+  
+  // Refresh if admin
+  if(STATE.role === 'admin') refreshStats();
+}
+
+/* ═══ ISTWA ═══ */
+function renderIstwaClient() {
+  if(!STATE.user) return;
+  var el = document.getElementById('istwa-cl-list');
+  var txs = DB.tx.filter(function(t){ return t.carteID===STATE.user.carteID; }).reverse();
+  if(!txs.length){ el.innerHTML='<div class="empty"><div class="empty-ico">📭</div>Pa gen tranzaksyon</div>'; return; }
+  
+  el.innerHTML='<div class="tx-list">'+txs.map(function(tx){
+    // Determine transaction type
+    var isRch = tx.type==='recharge';
+    var isPayment = tx.type==='achat';
+    var isWithdrawal = tx.type==='retrè';
+    
+    // Set icon based on type
+    var icon = isRch ? '⬆️' : (isWithdrawal ? '💸' : '💸');
+    
+    // Set color class - GREEN for recharge, RED for payments/withdrawals
+    var amtClass = isRch ? 'cr' : 'db';
+    
+    // Set sign - + for recharge, - for everything else
+    var amtSign = isRch ? '+' : '-';
+    
+    // Set description
+    var desc = tx.clNom || tx.maNom || (isRch ? 'Recharge' : (isWithdrawal ? 'Retrè' : 'Paiement'));
+    
+    return '<div class="tx-item">'+
+      '<div class="tx-ico '+amtClass+'">'+icon+'</div>'+
+      '<div class="tx-inf"><div class="tx-desc">'+desc+'</div>'+
+      '<div class="tx-date">'+fmtDate(tx.date)+'</div></div>'+
+      '<div class="tx-amt '+amtClass+'">'+amtSign+tx.montan.toLocaleString()+' HTG</div></div>';
+  }).join('')+'</div>';
+}
+
+/* ═══ ADMIN: NOUVO KLIYAN ═══ */
+function createClientAdmin() {
+  var nom    = document.getElementById('nc-nom').value.trim();
+  var email  = document.getElementById('nc-email').value.trim();
+  var tel    = document.getElementById('nc-tel').value.trim();
+  var pass   = document.getElementById('nc-pass').value;
+  var balans = parseInt(document.getElementById('nc-bal').value)||0;
+  
+  if(!nom||!email||!pass){ toast('Ranpli Non, Imel ak Modpas','error'); return; }
+  if(pass.length<6){ toast('Modpas min. 6 karaktè','error'); return; }
+  if(DB.kliyan.find(function(k){ return k.email===email; })){ toast('Imel sa déjà egziste','error'); return; }
+  
+  setBtn('btn-nc',true);
+  var carteID = genID();
+  var code    = genCode();
+  var kliyan  = { id:Date.now(), nom:nom, email:email, pass:pass, tel:tel, carteID:carteID, balans:balans, activation:code, pin:null, bloke:false, createdAt:Date.now() };
+  DB.kliyan.push(kliyan);
+  
+  if(balans>0){
+    DB.tx.push({ id:Date.now()+'i', type:'recharge', montan:balans, clNom:nom, carteID:carteID, date:Date.now(), note:'Balans inisyal' });
+  }
+  
+  saveDB(DB);
+  
+  document.getElementById('s-nom').textContent  = nom;
+  document.getElementById('s-id').textContent   = carteID;
+  document.getElementById('s-code').textContent = code;
+  document.getElementById('s-bal').textContent  = balans.toLocaleString()+' HTG';
+  closeMo('mo-new-cl');
+  openMo('mo-success-cl');
+  clrForm(['nc-nom','nc-email','nc-tel','nc-pass','nc-bal']);
+  setBtn('btn-nc',false,'✨ Kreye Kont + Carte');
+  refreshStats();
+}
+
+/* ═══ ADMIN: NOUVO MACHAND ═══ */
+function createMachandAdmin() {
+  var boutik = document.getElementById('nm-boutik').value.trim();
+  var nom    = document.getElementById('nm-nom').value.trim();
+  var email  = document.getElementById('nm-email').value.trim();
+  var tel    = document.getElementById('nm-tel').value.trim();
+  var pass   = document.getElementById('nm-pass').value;
+  
+  if(!boutik||!email||!pass){ toast('Ranpli champ obligatwa yo','error'); return; }
+  if(pass.length<6){ toast('Modpas min. 6 karaktè','error'); return; }
+  if(DB.machand.find(function(m){ return m.email===email; })){ toast('Imel sa déjà egziste','error'); return; }
+  
+  setBtn('btn-nm',true);
+  var machand = { id:Date.now(), nom:nom, nomBoutik:boutik, email:email, pass:pass, tel:tel, balans:0, actif:true, createdAt:Date.now() };
+  DB.machand.push(machand);
+  saveDB(DB);
+  
+  toast('"'+boutik+'" anrejistre!','success');
+  closeMo('mo-new-ma');
+  clrForm(['nm-boutik','nm-nom','nm-email','nm-tel','nm-pass']);
+  setBtn('btn-nm',false,'✨ Anrejistre Machand');
+  refreshStats();
+}
+
+/* ═══ ADMIN: RECHAJE ═══ */
+function doRechargeAdmin() {
+  var id  = document.getElementById('rch-id').value.trim().toUpperCase();
+  var amt = parseInt(document.getElementById('rch-amt').value);
+  if(!id||!amt||amt<=0){ toast('Antre ID ak montan valid','error'); return; }
+  
+  setBtn('btn-rch',true);
+  
+  // Find client
+  var kl = DB.kliyan.find(function(k){ return k.carteID===id; });
+  if(!kl){ 
+    toast('Carte pa egziste: '+id,'error'); 
+    setBtn('btn-rch',false,'✅ Konfime Rechaj'); 
+    return; 
+  }
+  
+  // ADD money to client balance
+  var oldBalans = kl.balans;
+  kl.balans += amt;  // ADD operation
+  
+  // Update database
+  DB.kliyan = DB.kliyan.map(function(k){ 
+    if(k.carteID===id) {
+      k.balans = kl.balans;
+    }
+    return k;
+  });
+  
+  // Record transaction
+  DB.tx.push({ 
+    id: Date.now(), 
+    type: 'recharge', 
+    montan: amt, 
+    clNom: kl.nom, 
+    carteID: id, 
+    date: Date.now(),
+    oldBalans: oldBalans,
+    newBalans: kl.balans
+  });
+  
+  saveDB(DB);
+  toast(amt.toLocaleString() + ' HTG ajoute! ('+oldBalans.toLocaleString()+' → '+kl.balans.toLocaleString()+')', 'success');
+  closeMo('mo-recharge');
+  clrForm(['rch-id','rch-amt']);
+  setBtn('btn-rch',false,'✅ Konfime Rechaj');
+  refreshStats();
+}
+
+function doRechargeMachand() {
+  var email = document.getElementById('rch-ma-email').value.trim();
+  var amt = parseInt(document.getElementById('rch-ma-amt').value);
+  if(!email||!amt||amt<=0){ toast('Antre email ak montan valid','error'); return; }
+  
+  setBtn('btn-rch-ma',true);
+  
+  // Find merchant
+  var ma = DB.machand.find(function(m){ return m.email===email; });
+  if(!ma){ 
+    toast('Machand pa egziste','error'); 
+    setBtn('btn-rch-ma',false,'✅ Rechaje'); 
+    return; 
+  }
+  
+  // ADD money to merchant balance
+  var oldBalans = ma.balans;
+  ma.balans += amt;  // ADD operation
+  
+  // Update database
+  DB.machand = DB.machand.map(function(m){ 
+    if(m.email===email) {
+      m.balans = ma.balans;
+    }
+    return m;
+  });
+  
+  // Record transaction
+  DB.tx.push({ 
+    id: Date.now(), 
+    type: 'recharge_ma', 
+    montan: amt, 
+    maNom: ma.nomBoutik, 
+    email: email, 
+    date: Date.now(),
+    oldBalans: oldBalans,
+    newBalans: ma.balans
+  });
+  
+  saveDB(DB);
+  toast(amt.toLocaleString() + ' HTG ajoute! ('+oldBalans.toLocaleString()+' → '+ma.balans.toLocaleString()+')', 'success');
+  closeMo('mo-recharge-ma');
+  clrForm(['rch-ma-email','rch-ma-amt']);
+  setBtn('btn-rch-ma',false,'✅ Rechaje');
+  refreshStats();
+}
+
+/* ═══ ADMIN: LIS KLIYAN ═══ */
+function renderListClientAdmin() {
+  var el = document.getElementById('list-cl-body');
+  if(!DB.kliyan.length){ el.innerHTML='<div class="empty"><div class="empty-ico">👤</div>Pa gen kliyan</div>'; return; }
+  el.innerHTML=DB.kliyan.map(function(k){
+    return '<div class="user-card">'+
+      '<h4>'+k.nom+'</h4>'+
+      '<p>'+k.email+(k.tel?' · '+k.tel:'')+'</p>'+
+      '<div class="uc-id">'+k.carteID+'</div>'+
+      '<div class="uc-bal">'+k.balans.toLocaleString()+' HTG</div>'+
+      '<span class="uc-status '+(k.bloke?'bloke':'ok')+'">'+(k.bloke?'🔒 BLOKE':'✓ AKTIF')+'</span>'+
+      '</div>';
+  }).join('');
+}
+
+/* ═══ MANDE RETRAIT ═══ */
+function demandeRetrè() {
+  if(!STATE.user || STATE.user.balans<=0) { toast('Pa gen balans pou retrè','error'); return; }
+  var montan = parseInt(document.getElementById('ret-amt').value);
+  var method = document.getElementById('ret-method').value;
+  var contact = document.getElementById('ret-contact').value.trim();
+  
+  if(!montan||montan<=0){ toast('Antre montan','error'); return; }
+  if(montan>STATE.user.balans){ toast('Montan twò wo','error'); return; }
+  if(!method){ toast('Chwazi metòd','error'); return; }
+  if(!contact){ toast('Antre nimewo oswa kont','error'); return; }
+  
+  setBtn('btn-ret',true);
+  DB.retraits.push({
+    id:Date.now(),
+    maId:STATE.user.id,
+    maNom:STATE.user.nomBoutik,
+    montan:montan,
+    method:method,
+    contact:contact,
+    statut:'pending',
+    date:Date.now()
+  });
+  saveDB(DB);
+  
+  toast('Retrè mande! Admin ap apwouve','success');
+  closeMo('mo-demand-ret');
+  clrForm(['ret-amt','ret-contact']);
+  document.getElementById('ret-method').value='';
+  setBtn('btn-ret',false,'✓ Mande Retrè');
+  if(STATE.role==='admin') refreshStats();
+}
+
+/* ═══ ADMIN: RETRAITS ═══ */
+function renderRetraits() {
+  var el = document.getElementById('ad-retraits-list');
+  var pendings = DB.retraits.filter(function(r){ return r.statut==='pending'; });
+  if(!pendings.length){
+    el.innerHTML='<div class="empty"><div class="empty-ico">💸</div>Pa gen retrè pou apwouve</div>';
+    return;
+  }
+  el.innerHTML = pendings.map(function(r){
+    return '<div class="ret-card">'+
+      '<div class="ret-info"><h4>'+r.maNom+'</h4><p>'+r.method.toUpperCase()+' · '+r.contact+'</p></div>'+
+      '<div class="ret-amt">'+r.montan.toLocaleString()+' HTG</div>'+
+      '<div class="ret-btns">'+
+      '<button class="ret-btn ok" onclick="approveRetrè('+r.id+')">✓</button>'+
+      '<button class="ret-btn no" onclick="rejectRetrè('+r.id+')">✗</button>'+
+      '</div></div>';
+  }).join('');
+}
+
+function approveRetrè(id) {
+  var ret = DB.retraits.find(function(r){ return r.id===id; });
+  if(!ret) return;
+  ret.statut='approved';
+  var ma = DB.machand.find(function(m){ return m.id===ret.maId; });
+  if(ma) ma.balans -= ret.montan;
+  DB.tx.push({
+    id:Date.now(), type:'retrè', montan:ret.montan,
+    maNom:ret.maNom, date:Date.now()
+  });
+  saveDB(DB);
+  toast('Retrè apwouve','success');
+  renderRetraits();
+  refreshStats();
+}
+
+function rejectRetrè(id) {
+  var ret = DB.retraits.find(function(r){ return r.id===id; });
+  if(!ret) return;
+  ret.statut='rejected';
+  saveDB(DB);
+  toast('Retrè rejte','info');
+  renderRetraits();
+}
+
+/* ═══ EXPORT CARTE ═══ */
+function exportCartePDF() {
+  if(!STATE.user){ toast('Konekte premièman','error'); return; }
+  
+  try {
+    var recto = '<div style="width:100%;padding:20px;background:linear-gradient(135deg,#38bdf8,#6366f1);color:white;border-radius:12px;font-family:Arial;margin-bottom:20px;text-align:left;">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">'+
+      '<div style="font-size:24px;font-weight:bold;">AyiPay</div>'+
+      '<div style="width:40px;height:30px;background:rgba(255,255,255,.3);border-radius:4px;"></div>'+
+      '</div>'+
+      '<div style="font-size:18px;font-weight:bold;margin-bottom:20px;letter-spacing:2px;">'+STATE.user.nom+'</div>'+
+      '<div style="margin-bottom:10px;"><span style="opacity:.7;font-size:11px;">ID CARTE</span><div style="font-size:14px;letter-spacing:2px;font-family:monospace;">'+STATE.user.carteID+'</div></div>'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:20px;">'+
+      '<div><span style="opacity:.7;font-size:11px;">VALID DEPI/EKSPIRE</span><div style="font-size:12px;">01/25 / 01/28</div></div>'+
+      '<div style="text-align:right;"><span style="opacity:.7;font-size:11px;">CVV</span><div style="font-size:16px;letter-spacing:2px;">***</div></div>'+
+      '</div>'+
+      '</div>';
+    
+    var verso = '<div style="width:100%;padding:20px;background:#1e293b;color:white;border-radius:12px;font-family:Arial;text-align:left;">'+
+      '<div style="background:rgba(255,255,255,.1);border-radius:8px;padding:12px;margin-bottom:16px;">'+
+      '<div style="font-size:11px;opacity:.7;margin-bottom:4px;">KÒD AKTIVASYON</div>'+
+      '<div style="font-size:16px;letter-spacing:3px;font-family:monospace;">'+STATE.user.code+'</div>'+
+      '</div>'+
+      '<div style="margin-bottom:16px;">'+
+      '<div style="font-size:11px;opacity:.7;margin-bottom:4px;">BALANS</div>'+
+      '<div style="font-size:24px;font-weight:bold;color:#22c55e;">'+STATE.user.balans.toLocaleString()+' HTG</div>'+
+      '</div>'+
+      '<div style="border-top:1px solid rgba(255,255,255,.1);padding-top:12px;">'+
+      '<div style="font-size:11px;opacity:.7;">KIJAN POU ITILIZE</div>'+
+      '<ol style="margin:8px 0;padding-left:20px;font-size:12px;">'+
+      '<li>Telecharje App AyiPay</li>'+
+      '<li>Konekte ak kart ID: '+STATE.user.carteID+'</li>'+
+      '<li>Kreye PIN 6 chif</li>'+
+      '</ol>'+
+      '<div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.1);font-size:10px;opacity:.6;">'+
+      '<div>Support: +509 XXXX XXXX</div>'+
+      '<div>Email: support@ayipay.ht</div>'+
+      '</div>'+
+      '</div>'+
+      '</div>';
+    
+    var element = document.createElement('div');
+    element.innerHTML = '<div style="padding:20px;"><div style="text-align:center;margin-bottom:20px;font-size:14px;opacity:.7;">RECTO</div>'+recto+
+                        '<div style="text-align:center;margin:30px 0 20px;font-size:14px;opacity:.7;">VERSO</div>'+verso+'</div>';
+    
+    var opt = {
+      margin: 10,
+      filename: 'Kart-'+STATE.user.carteID+'.pdf',
+      image: {type:'jpeg',quality:0.98},
+      html2canvas: {scale:2, backgroundColor:'#ffffff'},
+      jsPDF: {orientation:'portrait',unit:'mm',format:'a4'}
+    };
+    
+    html2pdf().set(opt).from(element).save().catch(function(err){
+      toast('Erè telechaje PDF','error');
+      console.error('PDF error:', err);
+    });
+    toast('📕 PDF telechaje!','ok');
+  } catch(err) {
+    toast('Erè telechaje','error');
+    console.error(err);
+  }
+}
+
+/* ═══ MACHAND CHARGE CLIENT ═══ */
+function chargeMachandClient() {
+  if(STATE.role!=='machand'){ toast('Sèlman machand ka fè sa','error'); return; }
+  var carteID = prompt('Antre ID carte kliyan:');
+  if(!carteID) return;
+  
+  var montan = prompt('Antre montan (HTG):');
+  if(!montan || isNaN(montan)) return;
+  montan = parseInt(montan);
+  
+  var client = DB.kliyan.find(function(k){ return k.carteID===carteID.toUpperCase(); });
+  if(!client){ toast('Carte pa egziste','error'); return; }
+  if(client.balans < montan){ toast('Kliyan pa gen ase lajan','error'); return; }
+  
+  client.balans -= montan;
+  STATE.user.balans += montan;
+  
+  DB.kliyan = DB.kliyan.map(function(k){ if(k.carteID===carteID.toUpperCase()) return client; return k; });
+  DB.machand = DB.machand.map(function(m){ if(m.id===STATE.user.id) return STATE.user; return m; });
+  DB.tx.push({id:Date.now(),type:'charge',montan:montan,clNom:client.nom,maId:STATE.user.id,maNom:STATE.user.nomBoutik,carteID:carteID,date:Date.now()});
+  
+  saveDB(DB);
+  toast(montan.toLocaleString()+' HTG soti sou '+client.nom,'success');
+  refreshStats();
+}
+
+function exportCarteDOCX() {
+  if(!STATE.user){ toast('Konekte premièman','error'); return; }
+  
+  try {
+    var nom = STATE.user.nom.toUpperCase();
+    var carteID = STATE.user.carteID;
+    var code = STATE.user.code;
+    
+    // HTML content for document
+    var html = `
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .title { text-align: center; color: #38bdf8; font-weight: bold; margin-bottom: 30px; }
+        .card { border: 3px solid #38bdf8; background: #0F4A8F; color: white; padding: 30px; border-radius: 12px; margin-bottom: 40px; }
+        .card-back { border: 3px solid #38bdf8; background: #1A1A2E; color: white; padding: 30px; border-radius: 12px; }
+        .logo { font-size: 20px; margin-bottom: 20px; }
+        .name { font-size: 18px; font-weight: bold; margin-bottom: 15px; }
+        .field { margin: 10px 0; }
+        .label { color: #96B4D2; font-size: 11px; }
+        .value { font-size: 14px; font-weight: bold; color: #38bdf8; }
+        .instructions { margin-top: 15px; font-size: 12px; }
+      </style>
+    </head>
+    <body>
+      <div class="title">✦ RECTO — DEVAN KART A ✦</div>
+      <div class="card">
+        <div class="logo">AP AyiPay</div>
+        <div class="name">${nom}</div>
+        <div class="field">
+          <div class="label">ID CARTE</div>
+          <div class="value">${carteID}</div>
+        </div>
+        <div class="field">
+          <div class="label">NIMEWO KART</div>
+          <div style="font-size: 16px; letter-spacing: 2px;">•••• •••• •••• 7823</div>
+        </div>
+        <div class="field" style="margin-top: 20px;">
+          <span class="label">VALID / EKSPIRE: 01/25 / 01/28</span>
+          <span style="margin-left: 20px; color: #96B4D2;">CVV: ***</span>
+        </div>
+      </div>
+      
+      <div class="title">✦ VERSO — DEYÈ KART A ✦</div>
+      <div class="card-back">
+        <div style="text-align: center; margin-bottom: 20px; color: #96B4D2;">
+          SIYAT / SIGNATURE<br>
+          _______________________
+        </div>
+        <div class="field">
+          <div class="label" style="color: #38bdf8; font-weight: bold;">KÒD AKTIVASYON</div>
+          <div class="value" style="font-family: 'Courier New'; font-size: 14px;">${code}</div>
+        </div>
+        <div class="field">
+          <span class="label">PIN PÈSONÈL:</span>
+          <div style="font-family: 'Courier New'; color: white;">__ __ __ __ __ __</div>
+        </div>
+        <div class="instructions">
+          <div style="color: #38bdf8; font-weight: bold; margin-bottom: 10px;">KIJAN POU ITILIZE</div>
+          ① Telecharje App AyiPay<br>
+          ② Konekte ak ID Carte ou<br>
+          ③ Kreye PIN 6 chif<br>
+          ④ Si bloke, kontakte Admin
+        </div>
+        <div style="margin-top: 20px; font-size: 10px; color: #96B4D2; text-align: center;">
+          📞 +509 40097947 | 📧 support@ayipay.ht
+        </div>
+      </div>
+    </body>
+    </html>
+    `;
+    
+    // Convert HTML to BLOB
+    var blob = new Blob([html], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.href = url;
+    link.download = 'Kart-' + carteID + '.docx';
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(function(){
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }, 500);
+    
+    toast('📄 Kart telechaje!','ok');
+  } catch(err) {
+    console.error('Error:', err);
+    toast('Erè telechaje: ' + err.message,'error');
+  }
+}
+
+/* ═══ MERCHANT CAMERA SCANNER ═══ */
+var merchantCameraStream = null;
+
+function toggleManualEntry() {
+  var manualSection = document.getElementById('manual-entry-section');
+  var cameraSection = document.getElementById('camera-view-section');
+  manualSection.style.display = manualSection.style.display === 'none' ? 'block' : 'none';
+  if(cameraSection.style.display !== 'none') {
+    closeMerchantCamera();
+  }
+}
+
+function openMerchantCamera() {
+  var manualSection = document.getElementById('manual-entry-section');
+  var cameraSection = document.getElementById('camera-view-section');
+  manualSection.style.display = 'none';
+  cameraSection.style.display = 'block';
+  
+  var video = document.getElementById('merchant-video');
+  
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+    .then(function(stream) {
+      merchantCameraStream = stream;
+      video.srcObject = stream;
+      video.play();
+    })
+    .catch(function(err) {
+      toast('Kamera pa ka ouvri: ' + err.message, 'error');
+      cameraSection.style.display = 'none';
+      manualSection.style.display = 'block';
+    });
+}
+
+function closeMerchantCamera() {
+  if(merchantCameraStream) {
+    merchantCameraStream.getTracks().forEach(function(t){ t.stop(); });
+    merchantCameraStream = null;
+  }
+  document.getElementById('camera-view-section').style.display = 'none';
+  document.getElementById('manual-entry-section').style.display = 'block';
+}
+
+function captureCardImage() {
+  var video = document.getElementById('merchant-video');
+  var canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  var ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0);
+  
+  // Try to extract text from image (for testing)
+  toast('📷 Imaj kapte! Mete ID kart la manyèlman.', 'ok');
+  
+  // Auto-close camera and show manual entry
+  closeMerchantCamera();
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ═══ POLLING - REAL-TIME SYNC CONFIGURATION ═══
+   ═════════════════════════════════════════════════════════════ */
+
+// ═══ CHOOSE YOUR HOSTING PLATFORM ═══
+// Options: 'github' | 'gitlab' | 'render' | 'netlify' | 'custom'
+const POLLING_PLATFORM = 'github';
+
+// ═══ PLATFORM CONFIGURATION ═══
+const POLLING_CONFIG = {
+  // GitHub Pages
+  github: {
+    enabled: true,
+    platform: 'github',
+    baseUrl: 'https://jwiler409-afk.github.io/ayipay-db',
+    uploadUrl: '', // GitHub requires API (see below)
+    interval: 2000, // 2 seconds
+    requiresAuth: false,
+    instructions: `
+      1. Create GitHub repo: ayipay-db (public)
+      2. Enable GitHub Pages
+      3. Upload database.json
+      4. Replace 'yourusername' above
+    `
+  },
+  
+  // GitLab Pages
+  gitlab: {
+    enabled: false,
+    platform: 'gitlab',
+    baseUrl: 'https://yourusername.gitlab.io/ayipay-db',
+    uploadUrl: 'https://gitlab.com/api/v4/projects/YOUR_PROJECT_ID/repository/files/database.json',
+    interval: 2000,
+    requiresAuth: true,
+    token: 'YOUR_GITLAB_TOKEN',
+    instructions: `
+      1. Create GitLab repo: ayipay-db (public)
+      2. Enable GitLab Pages
+      3. Get token from Settings → Access Tokens
+      4. Upload database.json
+      5. Replace yourusername & token
+    `
+  },
+  
+  // Render (Free Hosting)
+  render: {
+    enabled: false,
+    platform: 'render',
+    baseUrl: 'https://ayipay-db.onrender.com',
+    uploadUrl: 'https://ayipay-db.onrender.com/upload',
+    interval: 2000,
+    requiresAuth: true,
+    token: 'YOUR_RENDER_KEY',
+    instructions: `
+      1. Create Render account (free)
+      2. Create Static Site or Web Service
+      3. Connect GitHub repo
+      4. Deploy automatically
+      5. Your URL appears on Render dashboard
+    `
+  },
+  
+  // Netlify
+  netlify: {
+    enabled: false,
+    platform: 'netlify',
+    baseUrl: 'https://your-site.netlify.app',
+    uploadUrl: 'https://your-site.netlify.app/.netlify/functions/upload',
+    interval: 2000,
+    requiresAuth: true,
+    token: 'YOUR_NETLIFY_TOKEN',
+    instructions: `
+      1. Connect GitHub to Netlify
+      2. Deploy automatically
+      3. Get token from Personal Tokens
+      4. Your URL: your-site.netlify.app
+    `
+  },
+  
+  // Custom Server (Your Own)
+  custom: {
+    enabled: false,
+    platform: 'custom',
+    baseUrl: 'https://your-server.com',
+    uploadUrl: 'https://your-server.com/api/database/upload',
+    interval: 2000,
+    requiresAuth: true,
+    token: 'YOUR_API_KEY',
+    instructions: `
+      1. Set up your own server
+      2. Create endpoints:
+         - GET /api/database (return database.json)
+         - POST /api/database/upload (accept updates)
+      3. Replace your-server.com with your domain
+    `
+  }
+};
+
+// ═══ GET CURRENT CONFIG ═══
+const ACTIVE_CONFIG = POLLING_CONFIG[POLLING_PLATFORM];
+
+// ═══ POLLING STATE ═══
+var pollingEnabled = false;
+var pollingInterval = null;
+var lastDataHash = '';
+
+console.log('🔄 POLLING CONFIGURED FOR:', POLLING_PLATFORM.toUpperCase());
+console.log('📍 Database URL:', ACTIVE_CONFIG.baseUrl + '/database.json');
+console.log('⏱️ Update interval:', ACTIVE_CONFIG.interval + 'ms');
+
+/* ═══════════════════════════════════════════════════════════
+   ═══ POLLING FUNCTIONS ═══
+   ═════════════════════════════════════════════════════════════ */
+
+function changePlatform() {
+  var p = document.getElementById("polling-platform").value;
+  document.getElementById("github-token-section").style.display = p === "github" ? "block" : "none";
+  document.getElementById("gitlab-token-section").style.display = p === "gitlab" ? "block" : "none";
+}
+
+function savePollingConfig() {
+  var token = document.getElementById("github-token").value;
+  if (token) localStorage.setItem("gh_token", token);
+  toast("✅ Token sove!", "ok");
+  closeMo("mo-polling");
+  startPolling();
+}
+
+function startPolling() {
+  if (pollingEnabled) return;
+  
+  pollingEnabled = true;
+  console.log('▶️  POLLING STARTED - Checking every ' + ACTIVE_CONFIG.interval + 'ms');
+  
+  // Check immediately
+  checkForUpdates();
+  
+  // Check periodically
+  pollingInterval = setInterval(checkForUpdates, ACTIVE_CONFIG.interval);
+}
+
+function stopPolling() {
+  pollingEnabled = false;
+  if (pollingInterval) {
+    clearInterval(pollingInterval);
+    pollingInterval = null;
+  }
+  console.log('⏸️  POLLING STOPPED');
+}
+
+function checkForUpdates() {
+  if (!pollingEnabled) return;
+  
+  const dbUrl = ACTIVE_CONFIG.baseUrl + '/database.json?t=' + Date.now();
+  
+  fetch(dbUrl, {
+    method: 'GET',
+    headers: { 'Accept': 'application/json' },
+    cache: 'no-store'
+  })
+  .then(response => {
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    return response.json();
+  })
+  .then(remoteDB => {
+    // Hash the data
+    const currentHash = JSON.stringify(remoteDB);
+    
+    // If changed
+    if (currentHash !== lastDataHash) {
+      lastDataHash = currentHash;
+      console.log('✨ UPDATES DETECTED! Syncing...');
+      
+      // Update local database
+      DB = remoteDB;
+      
+      // Save to local storage
+      saveDB(DB);
+      
+      // Refresh UI
+      refreshAllUI();
+      
+      // Notify user
+      if (STATE.user) {
+        toast('🔄 Data synced from cloud!', 'ok');
+      }
+    }
+  })
+  .catch(error => {
+    console.error('❌ Polling error:', error.message);
+    // Silently fail - don't spam user with errors
+  });
+}
+
+function refreshAllUI() {
+  if (STATE.role === 'kliyan') {
+    renderClBalance();
+    renderClTx(STATE.user.carteID);
+  } else if (STATE.role === 'machand') {
+    if (document.getElementById('ma-balance')) {
+      document.getElementById('ma-balance').textContent = STATE.user.balans.toLocaleString();
+    }
+    renderMaTx(STATE.user.id);
+  } else if (STATE.role === 'admin') {
+    refreshStats();
+  }
+}
+
+function uploadToCloud() {
+  if (!pollingEnabled) {
+    console.log('⚠️  Polling disabled - skipping upload');
+    return;
+  }
+  
+  console.log('📤 Uploading to ' + POLLING_PLATFORM + '...');
+  
+  const payload = {
+    kliyan: DB.kliyan,
+    machand: DB.machand,
+    tx: DB.tx,
+    retraits: DB.retraits,
+    timestamp: Date.now()
+  };
+  
+  // Platform-specific upload
+  if (POLLING_PLATFORM === 'github') {
+    uploadToGitHub(payload);
+  } else if (POLLING_PLATFORM === 'gitlab') {
+    uploadToGitLab(payload);
+  } else if (POLLING_PLATFORM === 'render' || POLLING_PLATFORM === 'netlify' || POLLING_PLATFORM === 'custom') {
+    uploadToServer(payload);
+  }
+}
+
+function uploadToGitHub(payload) {
+  const GITHUB_TOKEN = localStorage.getItem('gh_token') || '';
+  const REPO = 'jwiler409-afk/ayipay-db';
+  if (!GITHUB_TOKEN) { console.warn('Token manke'); return; }
+  const FILE = 'database.json';
+  
+  if (GITHUB_TOKEN === 'YOUR_GITHUB_TOKEN') {
+    console.warn('⚠️  GitHub token not configured');
+    return;
+  }
+  
+  fetch(`https://api.github.com/repos/${REPO}/contents/${FILE}`, {
+    headers: { 'Authorization': 'token ' + GITHUB_TOKEN }
+  })
+  .then(res => res.json())
+  .then(fileData => {
+    return fetch(`https://api.github.com/repos/${REPO}/contents/${FILE}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': 'token ' + GITHUB_TOKEN,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        message: '📊 Update: ' + new Date().toLocaleString(),
+        content: btoa(JSON.stringify(payload, null, 2)),
+        sha: fileData.sha
+      })
+    });
+  })
+  .then(() => {
+    console.log('✅ GitHub updated!');
+    toast('✅ Cloud updated (GitHub)', 'ok');
+  })
+  .catch(err => {
+    console.error('❌ GitHub upload failed:', err);
+  });
+}
+
+function uploadToGitLab(payload) {
+  const GITLAB_TOKEN = POLLING_CONFIG.gitlab.token;
+  const PROJECT_ID = 'YOUR_PROJECT_ID';
+  const FILE = 'database.json';
+  
+  if (GITLAB_TOKEN === 'YOUR_GITLAB_TOKEN') {
+    console.warn('⚠️  GitLab token not configured');
+    return;
+  }
+  
+  const url = `https://gitlab.com/api/v4/projects/${PROJECT_ID}/repository/files/${FILE}`;
+  
+  fetch(url, {
+    method: 'GET',
+    headers: { 'PRIVATE-TOKEN': GITLAB_TOKEN }
+  })
+  .then(res => res.json())
+  .then(fileData => {
+    return fetch(url, {
+      method: 'PUT',
+      headers: {
+        'PRIVATE-TOKEN': GITLAB_TOKEN,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        branch: 'main',
+        content: JSON.stringify(payload, null, 2),
+        commit_message: '📊 Update: ' + new Date().toLocaleString()
+      })
+    });
+  })
+  .then(() => {
+    console.log('✅ GitLab updated!');
+    toast('✅ Cloud updated (GitLab)', 'ok');
+  })
+  .catch(err => {
+    console.error('❌ GitLab upload failed:', err);
+  });
+}
+
+function uploadToServer(payload) {
+  const uploadUrl = ACTIVE_CONFIG.uploadUrl;
+  const token = ACTIVE_CONFIG.token;
+  
+  if (uploadUrl === '') {
+    console.warn('⚠️  Upload URL not configured');
+    return;
+  }
+  
+  fetch(uploadUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + token
+    },
+    body: JSON.stringify(payload)
+  })
+  .then(res => res.json())
+  .then(data => {
+    console.log('✅ Server updated!');
+    toast('✅ Cloud updated (' + POLLING_PLATFORM + ')', 'ok');
+  })
+  .catch(err => {
+    console.error('❌ Upload failed:', err);
+    toast('⚠️  Upload failed - check connection', 'error');
+  });
+}
+
+var cameraStream = null;
+
+function openCamera() {
+  var container = document.getElementById('camera-container');
+  var video = document.getElementById('camera-video');
+  
+  if(!container) {
+    container = document.createElement('div');
+    container.id = 'camera-container';
+    container.style.cssText = 'background:rgba(0,0,0,.7);border-radius:12px;overflow:hidden;margin:16px 0;padding:16px;text-align:center;';
+    
+    video = document.createElement('video');
+    video.id = 'camera-video';
+    video.style.cssText = 'width:100%;height:300px;object-fit:cover;background:#000;border-radius:8px;';
+    video.autoplay = true;
+    video.playsinline = true;
+    
+    container.appendChild(video);
+    document.body.appendChild(container);
+  }
+  
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}})
+    .then(function(stream){
+      cameraStream = stream;
+      video.srcObject = stream;
+      container.style.display = 'block';
+      toast('📷 Kamèra pral','ok');
+    })
+    .catch(function(err){
+      toast('Erè ouvri kamèra','error');
+    });
+}
+
+function closeCamera() {
+  if(cameraStream){
+    cameraStream.getTracks().forEach(function(t){ t.stop(); });
+    cameraStream = null;
+    var container = document.getElementById('camera-container');
+    if(container) container.style.display = 'none';
+    toast('Kamèra fèmen','info');
+  }
+}
+
+/* ═══ QR CODE GENERATOR ═══ */
+function generateQR() {
+  if(!STATE.user){ toast('Konekte premièman','error'); return; }
+  
+  var qrData = STATE.user.carteID;
+  
+  var modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:200;padding:20px;';
+  modal.onclick = function(e){ if(e.target===modal) modal.remove(); };
+  
+  var content = document.createElement('div');
+  content.style.cssText = 'background:#1e293b;border-radius:16px;padding:24px;max-width:350px;width:100%;text-align:center;color:white;';
+  
+  var title = document.createElement('h3');
+  title.textContent = 'QR Code Kart Ou';
+  title.style.cssText = 'margin-bottom:16px;font-size:18px;';
+  content.appendChild(title);
+  
+  var qrDiv = document.createElement('div');
+  qrDiv.id = 'qr-display-'+Date.now();
+  qrDiv.style.cssText = 'background:white;border-radius:8px;padding:16px;margin-bottom:16px;display:inline-block;';
+  content.appendChild(qrDiv);
+  
+  var closeBtn = document.createElement('button');
+  closeBtn.textContent = 'Fèmen';
+  closeBtn.style.cssText = 'background:#38bdf8;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;width:100%;font-weight:600;';
+  closeBtn.onclick = function(){ modal.remove(); };
+  content.appendChild(closeBtn);
+  
+  modal.appendChild(content);
+  document.body.appendChild(modal);
+  
+  try {
+    new QRCode(qrDiv, {
+      text: qrData,
+      width: 200,
+      height: 200,
+      colorDark: '#38bdf8',
+      colorLight: '#ffffff'
+    });
+    toast('✓ QR Code jenere!','ok');
+  } catch(err) {
+    toast('Erè jenere QR Code','error');
+  }
+}
+
+/* ═══ INIT ─ */
+setTimeout(function(){
+  document.getElementById('scr-load').classList.add('hidden');
+  show('scr-welcome');
+}, 1200);
+</script>
+</body>
+</html>
