@@ -1343,17 +1343,19 @@ function saveDB(db) {
   return Promise.resolve(true);
 }
 
+var _lastSyncError = null;
+
 async function _flushToFirebase(db, force) {
-  if (!_savePending && !force) return;
-  _savePending = false;
+  if (!_savePending && !force) return false;
 
   if (!db_fire) {
     await _initFirebase();
   }
 
   if (!db_fire) {
+    _savePending = true; // kenbe l "an atant" pou reeseye otomatikman pita
     setSyncDot('yellow');
-    return;
+    return false;
   }
 
   try {
@@ -1381,13 +1383,32 @@ async function _flushToFirebase(db, force) {
       new Promise(function(_, reject) { setTimeout(function(){ reject(new Error('Timeout')); }, 10000); })
     ]);
 
+    _savePending = false;
+    _lastSyncError = null;
     setSyncDot('green');
     localLog('✅ Firebase sync: ' + db.kliyan.length + ' kliyan, ' + txCloud.length + ' tx');
+    return true;
   } catch(e) {
+    // KRITIK: kenbe _savePending=true pou boukle otomatik la (pi ba)
+    // ka reeseye — anvan, yon echèk te vle di done a rete pèdi
+    // jiskaske yon lòt aksyon manyèl te fèt.
+    _savePending = true;
+    _lastSyncError = (e && (e.code || e.message)) || 'erè enkoni';
     setSyncDot('yellow');
-    localLog('⚠️ Firebase sync echwe: ' + e.message, 'warn');
+    localLog('⚠️ Firebase sync echwe: ' + _lastSyncError, 'warn');
+    return false;
   }
 }
+
+/* ═══ REESEYE OTOMATIK ═══
+   Si yon sovgad rete "an atant" (echwe yon fwa), n ap reeseye chak
+   20 segond pandan app la vizib — konsa yon ti blip rezo pa fè yon
+   demann rete pèdi pou tout tan ankò. */
+setInterval(function() {
+  if (_savePending && document.visibilityState === 'visible') {
+    _flushToFirebase(DB, true);
+  }
+}, 20000);
 
 /* ═══ MANUAL SYNC ═══ */
 function manualSync() {
@@ -1406,7 +1427,8 @@ async function saveDBCritical(db) {
   DB = db;
   _lsSave(db);
   if (_saveTimer) { clearTimeout(_saveTimer); _saveTimer = null; }
-  await _flushToFirebase(db, true);
+  _savePending = true;
+  return await _flushToFirebase(db, true);
 }
 
 /* ═══ TIRE DÈNYE DONE SOU FIREBASE (yon sèl li, pa yon koute an
@@ -1982,6 +2004,12 @@ function updatePollStat() {
     var clCount = (DB.kliyan || []).length;
     var maCount = (DB.machand || []).length;
     dsEl.textContent = clCount + ' kliyan · ' + maCount + ' machand · ' + txCount + ' tx';
+  }
+  // Dènye erè sync (si genyen)
+  var errEl = document.getElementById('last-sync-error');
+  if (errEl) {
+    errEl.textContent = _lastSyncError || 'Okenn';
+    errEl.style.color = _lastSyncError ? 'var(--rd)' : 'var(--gr)';
   }
   // Sync mode
   var smEl = document.getElementById('sync-mode-txt');
@@ -3521,9 +3549,13 @@ async function demandeRetrè() {
 
   // KRITIK: voye sou Firebase IMEDYATMAN (pa dèbouns) pou demann lan
   // pa rete "prizonye" sou aparèy sa a sèlman si moun nan fèmen app la.
-  await saveDBCritical(DB);
+  var synced = await saveDBCritical(DB);
   
-  toast('✅ Retrè mande! Admin ap apwouve','success');
+  if (synced) {
+    toast('✅ Retrè mande! Admin ap apwouve','success');
+  } else {
+    toast('⚠️ Demann sove sou aparèy ou — n ap eseye voye l bay admin otomatikman', 'info');
+  }
   
   // Notify all admins
   if (typeof notifyAllAdmins === 'function') {
@@ -3607,8 +3639,12 @@ async function approveRetrè(id) {
   // KRITIK: voye sou Firebase IMEDYATMAN e ATANN konfimasyon anvan nou
   // di moun nan "apwouve" — sa evite lajan an "tounen" si app la fèmen
   // twò vit apre.
-  await saveDBCritical(DB);
-  toast('✅ Retrè apwouve pou ' + userType + ' (' + ret.montan.toLocaleString() + ' HTG)', 'success');
+  var synced = await saveDBCritical(DB);
+  if (synced) {
+    toast('✅ Retrè apwouve pou ' + userType + ' (' + ret.montan.toLocaleString() + ' HTG)', 'success');
+  } else {
+    toast('⚠️ Apwouve lokalman — n ap eseye voye sou Firebase otomatikman (pa fèmen app la twò vit)', 'info');
+  }
 }
 
 async function rejectRetrè(id) {
@@ -4278,6 +4314,7 @@ async function checkHaitiAccess() {
       <div style="font-size:12px;color:var(--gr);line-height:1.6">
         • Firebase: <span id="fb-status" style="color:var(--yw)">Checking...</span><br>
         • Tx lokal: <span id="data-status">—</span><br>
+        • Dènye erè sync: <span id="last-sync-error" style="color:var(--rd)">—</span><br>
         • Optimize: Debounce 3sek + Limit 100tx
       </div>
     </div>
