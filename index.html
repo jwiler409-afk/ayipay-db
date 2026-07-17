@@ -601,6 +601,9 @@ html[data-theme="light"] .terminal{background:rgba(248,250,252,.9);border-color:
         <div class="stat-lbl">Vant Jodi</div>
       </div>
     </div>
+    <div style="text-align:center;font-size:12px;color:var(--gr);margin:-8px 0 12px;letter-spacing:1px">
+      🆔 ID Machann: <span id="ma-machand-id" style="color:var(--bl);font-weight:700">—</span>
+    </div>
     <div class="terminal">
       <h3>💳 Terminal Paiement</h3>
       <div class="amt-disp">
@@ -620,6 +623,15 @@ html[data-theme="light"] .terminal{background:rgba(248,250,252,.9);border-color:
       <div class="sec-hdr"><h3>Aksyon</h3></div>
       <button class="btn btn-o" onclick="openMo('mo-merchant-sell')" style="width:100%;margin-bottom:8px">🛒 Vann an Men</button>
       <button class="btn btn-o" onclick="openMo('mo-demand-ret')" style="width:100%">💵 Mande Retrè Lajan</button>
+    </div>
+    <div>
+      <div class="sec-hdr" style="display:flex;justify-content:space-between;align-items:center">
+        <h3>💸 Demann Retrè Mwen</h3>
+        <button class="btn btn-o" style="width:auto;padding:6px 12px;font-size:12px" onclick="refreshDBFromCloud().then(()=>toast('🔄 Aktyalize!','success'))">🔄</button>
+      </div>
+      <div id="ma-retraits-list" style="margin-bottom:20px">
+        <div class="empty"><div class="empty-ico">💸</div>Ou pa fè demann retrè toujou</div>
+      </div>
     </div>
     <div>
       <div class="sec-hdr"><h3>Dènye Vant</h3></div>
@@ -1936,6 +1948,8 @@ function renderMaBalance() {
     }
   }
   updateMerchantBalanceToggleIcon();
+  var idEl = document.getElementById('ma-machand-id');
+  if (idEl && STATE.user) idEl.textContent = STATE.user.machandID || '—';
 }
 
 function toggleMerchantBalanceVisibility() {
@@ -1961,6 +1975,7 @@ function refreshAllUI() {
     STATE.user = DB.machand.find(m => m.id === STATE.user.id) || STATE.user;
     renderMaBalance();
     renderMaTx(STATE.user.id);
+    renderMaRetraits();
   } else if (STATE.role === 'admin') {
     renderAdminStats();
   }
@@ -2343,6 +2358,9 @@ function setBtn(id, load, txt) {
 function genID() {
   return 'AP-HTG-'+Math.floor(Math.random()*99999).toString().padStart(5,'0');
 }
+function genMachandID() {
+  return 'AP-MA-'+Math.floor(Math.random()*99999).toString().padStart(5,'0');
+}
 function genCode() {
   var c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',r='AP-';
   for(var i=0;i<4;i++) r+=c[Math.floor(Math.random()*c.length)];
@@ -2499,7 +2517,7 @@ function renderListMerchantsAdmin() {
     return '<div class="tx-item">'+
       '<div class="tx-ico db">🏪</div>'+
       '<div class="tx-inf"><div class="tx-desc">'+m.nomBoutik+'</div>'+
-      '<div class="tx-date">'+m.email+'</div></div>'+
+      '<div class="tx-date">'+m.email+' · 🆔 '+(m.machandID||'—')+'</div></div>'+
       '<div class="tx-amt gn">'+m.balans.toLocaleString()+' HTG</div></div>';
   }).join('')+'</div>';
 }
@@ -2949,14 +2967,62 @@ function loginMachand() {
   setBtn('btn-ma-login',true);
   var found = DB.machand.find(function(m){ return m.email===email && m.pass===pass; });
   if(!found){ toast('Imel oswa modpas enkorèk','error'); setBtn('btn-ma-login',false,'Konekte'); return; }
+  // Bay ansyen kont machann ki pa t gen ID yo youn otomatikman
+  if (!found.machandID) {
+    found.machandID = genMachandID();
+    DB.machand = DB.machand.map(function(m){ return m.id === found.id ? found : m; });
+    saveDB(DB);
+  }
   STATE.role='machand'; STATE.user=found;
   renderMaBalance();
   renderMaTx(found.id);
+  renderMaRetraits();
   show('scr-dash-ma');
+  var idEl = document.getElementById('ma-machand-id');
+  if (idEl) idEl.textContent = found.machandID;
   toast('Byenveni '+found.nomBoutik+'!','success');
   setBtn('btn-ma-login',false,'Konekte');
   // Clear password field
   document.getElementById('ma-pass').value = '';
+}
+
+function renderMaRetraits() {
+  var el = document.getElementById('ma-retraits-list');
+  if (!el || !STATE.user) return;
+  var mine = DB.retraits.filter(function(r){ return r.role === 'machand' && r.maId === STATE.user.id; })
+    .sort(function(a,b){ return b.date - a.date; }).slice(0, 15);
+  if (!mine.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-ico">💸</div>Ou pa fè demann retrè toujou</div>';
+    return;
+  }
+  el.innerHTML = mine.map(function(r) {
+    var statutLbl = r.statut === 'pending' ? '⏳ Ann Atant' : r.statut === 'approved' ? '✅ Apwouve' : r.statut === 'cancelled' ? '🚫 Anile' : '❌ Rejte';
+    var statutColor = r.statut === 'pending' ? 'var(--yw)' : r.statut === 'approved' ? 'var(--gn)' : 'var(--rd)';
+    var cancelBtn = r.statut === 'pending'
+      ? '<button class="btn btn-o" style="width:auto;padding:6px 12px;font-size:11px;color:var(--rd);border-color:var(--rd);margin-top:8px" onclick="cancelMyRetrait('+r.id+')">🚫 Anile Demann</button>'
+      : '';
+    return '<div style="background:var(--nv2);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:12px;margin-bottom:10px">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start">'+
+        '<div><div style="font-weight:700;font-size:14px">'+r.montan.toLocaleString()+' HTG</div>'+
+        '<div style="font-size:11px;color:var(--gr)">'+r.method.toUpperCase()+' · '+fmtDate(r.date)+'</div></div>'+
+        '<div style="font-size:12px;font-weight:700;color:'+statutColor+'">'+statutLbl+'</div>'+
+      '</div>'+cancelBtn+
+      '</div>';
+  }).join('');
+}
+
+async function cancelMyRetrait(id) {
+  if (!STATE.user) return;
+  await refreshDBFromCloud();
+  var ret = DB.retraits.find(function(r){ return r.id === id; });
+  if (!ret) { toast('Demann sa pa jwenn ankò','error'); renderMaRetraits(); return; }
+  if (ret.maId !== STATE.user.id) { toast('Ou pa ka anile demann sa a','error'); return; }
+  if (ret.statut !== 'pending') { toast('Demann sa deja trete, ou pa ka anile l ankò','info'); renderMaRetraits(); return; }
+  ret.statut = 'cancelled';
+  _lsSave(DB);
+  renderMaRetraits();
+  var synced = await saveDBCritical(DB);
+  toast(synced ? '🚫 Demann retrè anile' : '🚫 Anile lokalman — n ap sinkwonize l otomatikman', synced ? 'info' : 'info');
 }
 
 function renderMaTx(maId) {
@@ -3391,7 +3457,7 @@ function createMachandAdmin() {
   if(DB.machand.find(function(m){ return m.email===email; })){ toast('Imel sa déjà egziste','error'); return; }
   
   setBtn('btn-nm',true);
-  var machand = { id:Date.now(), nom:nom, nomBoutik:boutik, email:email, pass:pass, tel:tel, balans:0, actif:true, createdAt:Date.now() };
+  var machand = { id:Date.now(), machandID:genMachandID(), nom:nom, nomBoutik:boutik, email:email, pass:pass, tel:tel, balans:0, actif:true, createdAt:Date.now() };
   DB.machand.push(machand);
   saveDB(DB); // async - Firebase
   
@@ -3539,7 +3605,8 @@ async function demandeRetrè() {
     role: STATE.role,
     maId:STATE.user.id,
     maNom:reqNom,
-    carteID: isClient ? STATE.user.carteID : undefined,
+    carteID: isClient ? STATE.user.carteID : null,
+    machandID: isClient ? null : (STATE.user.machandID || null),
     montan:montan,
     method:method,
     contact:contact,
@@ -3567,6 +3634,7 @@ async function demandeRetrè() {
   document.getElementById('ret-method').value='';
   setBtn('btn-ret',false,'✓ Mande Retrè');
   if(STATE.role==='admin') refreshStats();
+  if(STATE.role==='machand') renderMaRetraits();
 }
 
 /* ═══ ADMIN: RETRAITS ═══ */
@@ -3579,8 +3647,9 @@ function renderRetraits() {
   }
   el.innerHTML = pendings.map(function(r){
     var tag = r.role === 'client' ? '👤 Kliyan' : '🏪 Machand';
+    var idLine = r.role === 'client' ? (r.carteID || '—') : (r.machandID || '—');
     return '<div class="ret-card">'+
-      '<div class="ret-info"><h4>'+r.maNom+' <span style="font-size:10px;font-weight:600;color:var(--gr)">('+tag+')</span></h4><p>'+r.method.toUpperCase()+' · '+r.contact+'</p></div>'+
+      '<div class="ret-info"><h4>'+r.maNom+' <span style="font-size:10px;font-weight:600;color:var(--gr)">('+tag+')</span></h4><p>'+r.method.toUpperCase()+' · '+r.contact+'</p><p style="font-size:11px;color:var(--bl);margin-top:2px">🆔 '+idLine+'</p></div>'+
       '<div class="ret-amt">'+r.montan.toLocaleString()+' HTG</div>'+
       '<div class="ret-btns">'+
       '<button class="ret-btn ok" onclick="approveRetrè('+r.id+')">✓</button>'+
