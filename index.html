@@ -72,8 +72,15 @@ if ('Notification' in window && Notification.permission === 'default') {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
-/* ── Firebase Loader: tente CDN, sinon fallback localStorage ── */
+/* ── Firebase Loader: tente CDN, sinon fallback localStorage ──
+   KRITIK: chajman an dwe REEZEYAB. Anvan, si premye eseyi a echwe
+   (egzanp: rezo fèb pandan 4 segond limit tan an), Firebase te rete
+   "kase" pou TOUT sesyon an, san okenn fason pou repare l — menm
+   bouton "refresh" pa t ka fè anyen paske li t ap tann yon rezilta
+   ki te deja "mouri". Kounye a chak apèl nouvo bay yon nouvo chans. */
 var FIREBASE_OK = false;
+var _fbScriptsLoaded = false;
+var _fbLoadingPromise = null;
 function _loadScript(src, timeoutMs) {
   return new Promise(res => {
     var done = false;
@@ -85,21 +92,30 @@ function _loadScript(src, timeoutMs) {
     document.head.appendChild(s);
     // Pwoteksyon: si pa gen rezo, kèk WebView pa deklanche onerror.
     // Nou pa kite l tann pou tout tan — apre X segond, n ap kontinye san Firebase.
-    setTimeout(() => finish(false), timeoutMs || 4000);
+    setTimeout(() => finish(false), timeoutMs || 8000);
   });
 }
-var _firebaseReady = (async function() {
-  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
-    // Pa gen rezo: pa eseye chaje Firebase ditou, ale dirèk nan mode lokal
-    FIREBASE_OK = false;
-    return false;
-  }
-  const ok1 = await _loadScript('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
-  if (!ok1) { FIREBASE_OK = false; return false; }
-  const ok2 = await _loadScript('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js');
-  FIREBASE_OK = ok1 && ok2;
-  return FIREBASE_OK;
-})();
+function _loadFirebaseScripts() {
+  if (_fbScriptsLoaded) return Promise.resolve(true);
+  if (_fbLoadingPromise) return _fbLoadingPromise; // eviter chaje 2 fwa an menm tan
+  _fbLoadingPromise = (async function() {
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      FIREBASE_OK = false;
+      _fbLoadingPromise = null; // pèmèt yon lòt eseyi pita lè rezo a tounen
+      return false;
+    }
+    const ok1 = await _loadScript('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js', 8000);
+    if (!ok1) { FIREBASE_OK = false; _fbLoadingPromise = null; return false; }
+    const ok2 = await _loadScript('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js', 8000);
+    FIREBASE_OK = ok1 && ok2;
+    _fbScriptsLoaded = FIREBASE_OK;
+    _fbLoadingPromise = null; // si l echwe, sa a rete null pou pèmèt reeseye
+    return FIREBASE_OK;
+  })();
+  return _fbLoadingPromise;
+}
+// Kickstart premye eseyi a nan chaj paj la
+var _firebaseReady = _loadFirebaseScripts();
 </script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -383,7 +399,7 @@ html[data-theme="light"] .terminal{background:rgba(248,250,252,.9);border-color:
 
 <div id="notification-center"></div>
 
-<div id="whatsapp-float-btn" class="hidden" onclick="openWhatsAppSupport()" title="Kontakte Sipò sou WhatsApp" style="position:fixed;bottom:22px;right:18px;width:52px;height:52px;background:#25D366;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.35);cursor:pointer;z-index:9997;font-size:26px;line-height:1">💬</div>
+<div id="whatsapp-float-btn" class="hidden" onclick="openWhatsAppSupport()" title="Kontakte Sipò sou WhatsApp" style="position:fixed;top:64px;right:14px;width:46px;height:46px;background:#25D366;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.35);cursor:pointer;z-index:60;font-size:22px;line-height:1">💬</div>
 
 <div id="scr-load">
   <div class="ap-logo-big">
@@ -489,6 +505,7 @@ html[data-theme="light"] .terminal{background:rgba(248,250,252,.9);border-color:
       <div class="ib" onclick="location.reload()" title="Rafwèshi Aplikasyon" style="font-size:18px">🔄</div>
       <div class="tb-logo"><span>Ayi</span>Pay</div>
       <span class="tb-badge cl">Kliyan</span>
+      <span class="sync-dot-ind" title="Estati koneksyon — peze pou aktyalize" onclick="manualRefreshTap(this)" style="width:10px;height:10px;border-radius:50%;background:#ef4444;display:inline-block;margin-left:6px;box-shadow:0 0 6px #ef4444;cursor:pointer"></span>
     </div>
     <div class="tb-right">
       <div class="ib" onclick="toggleAppTheme()" title="Chanje Mode" id="cl-topbar-theme">🌙</div>
@@ -561,6 +578,7 @@ html[data-theme="light"] .terminal{background:rgba(248,250,252,.9);border-color:
       <div class="ib" onclick="location.reload()" title="Rafwèshi Aplikasyon" style="font-size:18px">🔄</div>
       <div class="tb-logo"><span>Ayi</span>Pay</div>
       <span class="tb-badge ma">Machand</span>
+      <span class="sync-dot-ind" title="Estati koneksyon — peze pou aktyalize" onclick="manualRefreshTap(this)" style="width:10px;height:10px;border-radius:50%;background:#ef4444;display:inline-block;margin-left:6px;box-shadow:0 0 6px #ef4444;cursor:pointer"></span>
     </div>
     <div class="tb-right">
       <div class="ib" onclick="toggleAppTheme()" id="ma-topbar-theme">🌙</div>
@@ -620,7 +638,7 @@ html[data-theme="light"] .terminal{background:rgba(248,250,252,.9);border-color:
       <div class="ib" onclick="location.reload()" title="Rafwèshi Aplikasyon" style="font-size:18px">🔄</div>
       <div class="tb-logo"><span>Ayi</span>Pay</div>
       <span class="tb-badge ad">Admin</span>
-      <span id="sync-dot" title="Sync status" style="width:10px;height:10px;border-radius:50%;background:#ef4444;display:inline-block;margin-left:6px;box-shadow:0 0 6px #ef4444"></span>
+      <span class="sync-dot-ind" id="sync-dot" title="Estati koneksyon — peze pou aktyalize" onclick="manualRefreshTap(this)" style="width:10px;height:10px;border-radius:50%;background:#ef4444;display:inline-block;margin-left:6px;box-shadow:0 0 6px #ef4444;cursor:pointer"></span>
     </div>
     <div class="tb-right">
       <div class="ib" onclick="openMo('mo-settings')" style="font-size:18px">⚙️</div>
@@ -1181,10 +1199,11 @@ function _lsLoad() {
 /* ═══ INIT FIREBASE (si internet disponib) ═══ */
 async function _initFirebase() {
   if (typeof navigator !== 'undefined' && navigator.onLine === false) return false;
-  // Pwoteksyon: pa janm kite sa a bloke aplikasyon an pou plis pase 5s
+  // Pwoteksyon: pa janm kite sa a bloke aplikasyon an pou plis pase 8s.
+  // _loadFirebaseScripts() reeseye chak fwa si eseyi anvan an te echwe.
   const ready = await Promise.race([
-    _firebaseReady,
-    new Promise(res => setTimeout(() => res(false), 5000))
+    _loadFirebaseScripts(),
+    new Promise(res => setTimeout(() => res(false), 8000))
   ]);
   if (!ready || !FIREBASE_OK || typeof firebase === 'undefined') return false;
   try {
@@ -1929,12 +1948,23 @@ function refreshAllUI() {
    Remplace pa save-on-action + manualSync() sèlman. */
 
 function setSyncDot(color) {
-  var d = document.getElementById('sync-dot');
-  if (!d) return;
+  var dots = document.querySelectorAll('.sync-dot-ind');
+  if (!dots || !dots.length) return;
   var colors = { green: '#22c55e', red: '#ef4444', yellow: '#f59e0b' };
   var c = colors[color] || colors.red;
-  d.style.background = c;
-  d.style.boxShadow = '0 0 6px ' + c;
+  dots.forEach(function(d) {
+    d.style.background = c;
+    d.style.boxShadow = '0 0 6px ' + c;
+  });
+}
+
+/* Peze ti pwen koneksyon an → fòse yon aktyalizasyon manyèl imedyat */
+function manualRefreshTap(el) {
+  if (el) { el.style.opacity = '0.5'; }
+  refreshDBFromCloud().then(function(ok) {
+    if (el) { el.style.opacity = '1'; }
+    toast(ok ? '🔄 Aktyalize — konekte!' : '⚠️ Pa gen koneksyon Firebase kounye a', ok ? 'success' : 'error');
+  });
 }
 
 /* ═══ SETTINGS STATUS (rele lè mo-settings ouvri) ═══ */
