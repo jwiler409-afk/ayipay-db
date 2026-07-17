@@ -677,7 +677,10 @@ html[data-theme="light"] .terminal{background:rgba(248,250,252,.9);border-color:
     </div>
     
     <div id="ad-tab-2" class="tab-content">
-      <div class="sec-hdr"><h3>Apwobasyon Retrè</h3></div>
+      <div class="sec-hdr" style="display:flex;justify-content:space-between;align-items:center">
+        <h3>Apwobasyon Retrè</h3>
+        <button class="btn btn-o" style="width:auto;padding:6px 12px;font-size:12px" onclick="refreshDBFromCloud().then(()=>toast('🔄 Aktyalize!','success'))">🔄 Aktyalize</button>
+      </div>
       <div id="ad-retraits-list" style="margin-bottom:20px">
         <div class="empty"><div class="empty-ico">💸</div>Pa gen retrè pou apwouve</div>
       </div>
@@ -1217,6 +1220,8 @@ async function loadDB() {
       DB.machand = DB.machand || [];
       DB.tx = DB.tx || [];
       DB.retraits = DB.retraits || [];
+        DB.cardRequests = DB.cardRequests || [];
+        DB.rechargeRequests = DB.rechargeRequests || [];
         DB.payConfig = DB.payConfig || {};
     }
     setSyncDot('yellow');
@@ -1232,6 +1237,8 @@ async function loadDB() {
         DB.machand = DB.machand || [];
         DB.tx = DB.tx || [];
         DB.retraits = DB.retraits || [];
+        DB.cardRequests = DB.cardRequests || [];
+        DB.rechargeRequests = DB.rechargeRequests || [];
         DB.payConfig = DB.payConfig || {};
         _lsSave(DB); // kopi lokal
         return DB;
@@ -1246,6 +1253,8 @@ async function loadDB() {
     DB.machand = DB.machand || [];
     DB.tx = DB.tx || [];
     DB.retraits = DB.retraits || [];
+        DB.cardRequests = DB.cardRequests || [];
+        DB.rechargeRequests = DB.rechargeRequests || [];
         DB.payConfig = DB.payConfig || {};
   }
   setSyncDot('yellow');
@@ -1315,8 +1324,8 @@ function saveDB(db) {
   return Promise.resolve(true);
 }
 
-async function _flushToFirebase(db) {
-  if (!_savePending) return;
+async function _flushToFirebase(db, force) {
+  if (!_savePending && !force) return;
   _savePending = false;
 
   if (!db_fire) {
@@ -1343,6 +1352,8 @@ async function _flushToFirebase(db) {
       machand: db.machand,
       tx: txCloud,
       retraits: retraitsCloud,
+      cardRequests: (db.cardRequests || []).slice(-200),
+      rechargeRequests: (db.rechargeRequests || []).slice(-200),
       updated: Date.now()
     });
 
@@ -1367,6 +1378,70 @@ function manualSync() {
     toast('✅ Sync fèt!', 'success');
   });
 }
+
+/* ═══ SAVE KRITIK — pou aksyon lajan (retrè, dépo, apwobasyon)
+   Pa gen dèbouns 500ms: li voye sou Firebase IMEDYATMAN e li ATANN
+   konfimasyon anvan l retounen. Sa evite pèdi yon chanjman si moun
+   nan fèmen/chanje app la twò vit apre yon aksyon finansye. ═══ */
+async function saveDBCritical(db) {
+  DB = db;
+  _lsSave(db);
+  if (_saveTimer) { clearTimeout(_saveTimer); _saveTimer = null; }
+  await _flushToFirebase(db, true);
+}
+
+/* ═══ TIRE DÈNYE DONE SOU FIREBASE (yon sèl li, pa yon koute an
+   dirèk pou pa gaspiye quota). Sèvi anvan yon aksyon kritik (pou pa
+   travay sou yon kopi ki gen tan pase), e lè app la vin vizib ankò
+   (pou machann/admin toujou wè dènye demann yo san yo pa rebooté). ═══ */
+async function refreshDBFromCloud() {
+  if (!db_fire) {
+    var ok = await _initFirebase();
+    if (!ok) return false;
+  }
+  try {
+    const snap = await db_fire.collection('ayipay').doc('data').get();
+    if (snap.exists) {
+      var cloud = snap.data();
+      DB.kliyan = cloud.kliyan || DB.kliyan || [];
+      DB.machand = cloud.machand || DB.machand || [];
+      DB.tx = cloud.tx || DB.tx || [];
+      DB.retraits = cloud.retraits || DB.retraits || [];
+      DB.cardRequests = cloud.cardRequests || DB.cardRequests || [];
+      DB.rechargeRequests = cloud.rechargeRequests || DB.rechargeRequests || [];
+      DB.payConfig = DB.payConfig || {};
+      DB._updated = cloud.updated || Date.now();
+      _lsSave(DB);
+      setSyncDot('green');
+      try { refreshAllUI(); } catch(e) {}
+      try { if (STATE.role === 'admin') renderRetraits(); } catch(e) {}
+      return true;
+    }
+  } catch(e) {
+    console.warn('refreshDBFromCloud echwe', e);
+    setSyncDot('yellow');
+  }
+  return false;
+}
+
+/* ═══ RE-SYNC OTOMATIK LÈ APP LA VIN VIZIB ANKÒ ═══
+   Chak fwa machann/admin kite paj la (chanje app, etenn ekran) epi
+   yo tounen, nou tire dènye done sou Firebase yon sèl fwa (1 li, pa
+   chè) — konsa yo pa janm rete ak done ki gen tan pase san yo pa
+   konnen. Si gen yon sovgad ki poko fin monte lè yo kite paj la, nou
+   fòse l monte tousuit pou l pa pèdi. */
+document.addEventListener('visibilitychange', function() {
+  if (document.visibilityState === 'visible') {
+    if (STATE.role === 'admin' || STATE.role === 'machand' || STATE.role === 'client') {
+      refreshDBFromCloud();
+    }
+  } else if (document.visibilityState === 'hidden') {
+    if (_savePending) { _flushToFirebase(DB, true); }
+  }
+});
+window.addEventListener('pagehide', function() {
+  if (_savePending) { _flushToFirebase(DB, true); }
+});
 
 /* ═══ NETWAYAJ DONE PA ITIL ═══ */
 function cleanupOldData() {
@@ -1452,11 +1527,13 @@ function createTransaction(from_id, from_role, to_id, to_role, amount, type, des
 /* ═══════════════════════════════════════════════════════════════
    ADMIN FUNCTIONS
 ═══════════════════════════════════════════════════════════════ */
-function adminDepositClient() {
+async function adminDepositClient() {
   var email = document.getElementById('deposit-email').value.trim();
   var amount = parseFloat(document.getElementById('deposit-amount').value) || 0;
   
   if (!email || amount <= 0) { toast('Antre email ak montant valid', 'error'); return; }
+
+  await refreshDBFromCloud();
   var klient = DB.kliyan.find(k => k.email === email);
   if (!klient) { toast('Kliyan pa jwenn', 'error'); return; }
   if (klient.bloke) { toast('🔒 Kart sa bloke — pa gen tranzaksyon pèmi', 'error'); return; }
@@ -1469,20 +1546,19 @@ function adminDepositClient() {
   setBtn('btn-deposit', true);
   _lsSave(DB); // Synchronous localStorage save
   
-  // Show confirmation with updated balance
-  toast('✅ ' + amount + ' HTG dèpoze pou ' + klient.nom + ' (Nouvo Balans: ' + klient.balans.toLocaleString() + ' HTG)', 'success');
-  
-  // Also async save to Firebase
-  saveDB(DB).then(() => {
+  // KRITIK: voye sou Firebase IMEDYATMAN e ATANN konfimasyon reyèl
+  try {
+    await saveDBCritical(DB);
+    toast('✅ ' + amount + ' HTG dèpoze pou ' + klient.nom + ' (Nouvo Balans: ' + klient.balans.toLocaleString() + ' HTG)', 'success');
     setBtn('btn-deposit', false, '✅ Konfime Dépôt');
     document.getElementById('deposit-email').value = '';
     document.getElementById('deposit-amount').value = '';
     closeMo('mo-deposit');
     refreshAllUI();
-  }).catch(e => {
+  } catch(e) {
     toast('Erè pandan Firebase sync', 'error');
     setBtn('btn-deposit', false, '✅ Konfime Dépôt');
-  });
+  }
 }
 
 function adminWithdrawal() {
@@ -3385,7 +3461,7 @@ function openClientWithdrawModal() {
   openMo('mo-demand-ret');
 }
 
-function demandeRetrè() {
+async function demandeRetrè() {
   if(!STATE.user || (STATE.user.balans||0)<=0) { toast('Pa gen balans pou retrè','error'); return; }
   if (STATE.role === 'client' && !requireCarteVerified('mande retrè')) return;
   var montan = parseInt(document.getElementById('ret-amt').value);
@@ -3412,9 +3488,12 @@ function demandeRetrè() {
     statut:'pending',
     date:Date.now()
   });
-  saveDB(DB); // async - Firebase
+
+  // KRITIK: voye sou Firebase IMEDYATMAN (pa dèbouns) pou demann lan
+  // pa rete "prizonye" sou aparèy sa a sèlman si moun nan fèmen app la.
+  await saveDBCritical(DB);
   
-  toast('Retrè mande! Admin ap apwouve','success');
+  toast('✅ Retrè mande! Admin ap apwouve','success');
   
   // Notify all admins
   if (typeof notifyAllAdmins === 'function') {
@@ -3448,9 +3527,15 @@ function renderRetraits() {
   }).join('');
 }
 
-function approveRetrè(id) {
+async function approveRetrè(id) {
+  // KRITIK: rale dènye done sou Firebase anvan nou touche anyen, pou
+  // nou pa travay sou yon kopi ki gen tan pase e ekrase yon lòt
+  // chanjman ki te fèt sou yon lòt aparèy.
+  await refreshDBFromCloud();
+
   var ret = DB.retraits.find(function(r){ return r.id===id; });
-  if(!ret) return;
+  if(!ret) { toast('Demann sa pa jwenn ankò (li ka deja trete)','error'); renderRetraits(); return; }
+  if (ret.statut !== 'pending') { toast('Demann sa deja trete','info'); renderRetraits(); return; }
   ret.statut='approved';
   var userBefore, userType;
   
@@ -3486,21 +3571,26 @@ function approveRetrè(id) {
   
   // KRITIK: Save immediately to localStorage (MUST be synchronous)
   _lsSave(DB);
-  toast('✅ Retrè apwouve pou ' + userType + ' (' + ret.montan.toLocaleString() + ' HTG)', 'success');
-  
-  // Then async save to Firebase (non-blocking)
-  saveDB(DB);
   renderRetraits();
   refreshStats();
+
+  // KRITIK: voye sou Firebase IMEDYATMAN e ATANN konfimasyon anvan nou
+  // di moun nan "apwouve" — sa evite lajan an "tounen" si app la fèmen
+  // twò vit apre.
+  await saveDBCritical(DB);
+  toast('✅ Retrè apwouve pou ' + userType + ' (' + ret.montan.toLocaleString() + ' HTG)', 'success');
 }
 
-function rejectRetrè(id) {
+async function rejectRetrè(id) {
+  await refreshDBFromCloud();
   var ret = DB.retraits.find(function(r){ return r.id===id; });
-  if(!ret) return;
+  if(!ret) { toast('Demann sa pa jwenn ankò','error'); renderRetraits(); return; }
+  if (ret.statut !== 'pending') { toast('Demann sa deja trete','info'); renderRetraits(); return; }
   ret.statut='rejected';
-  saveDB(DB); // async - Firebase
-  toast('Retrè rejte','info');
+  _lsSave(DB);
   renderRetraits();
+  await saveDBCritical(DB);
+  toast('Retrè rejte','info');
 }
 
 /* ═══ EXPORT CARTE ═══ */
@@ -3974,18 +4064,7 @@ window.addEventListener('online', function() {
       fbEl.style.color = ok ? 'var(--gn)' : 'var(--yw)';
     }
     if (ok && db_fire) {
-      db_fire.collection('ayipay').doc('data').get().then(function(snap) {
-        if (snap.exists) {
-          DB = snap.data();
-          DB.kliyan = DB.kliyan || [];
-          DB.machand = DB.machand || [];
-          DB.tx = DB.tx || [];
-          DB.retraits = DB.retraits || [];
-        DB.payConfig = DB.payConfig || {};
-          _lsSave(DB);
-          setSyncDot('green');
-        }
-      }).catch(function(){ setSyncDot('yellow'); });
+      refreshDBFromCloud();
     }
   });
 });
@@ -4545,10 +4624,11 @@ function renderAdminCardRequests() {
   }
 }
 
-function adminApproveCardIDRequest(reqId) {
+async function adminApproveCardIDRequest(reqId) {
+  await refreshDBFromCloud();
   DB.cardRequests = DB.cardRequests || [];
   var req = DB.cardRequests.find(function(r){ return r.id == reqId && r.type === 'id'; });
-  if (!req || req.statut !== 'pending') { toast('Demann pa jwenn', 'error'); return; }
+  if (!req || req.statut !== 'pending') { toast('Demann pa jwenn oswa deja trete', 'error'); renderAdminCardRequests(); return; }
   var kl = DB.kliyan.find(function(k){ return k.id == req.kliyanId; });
   if (!kl) { toast('Kliyan pa jwenn ankò', 'error'); return; }
   kl.carteVerified = true;
@@ -4558,40 +4638,49 @@ function adminApproveCardIDRequest(reqId) {
   req.statut = 'approved'; req.approvedAt = Date.now();
   DB.tx.push({ id: Date.now(), type: 'card_id_fee', montan: req.montan, carteID: kl.carteID,
     clNom: kl.nom, ref: req.ref, date: Date.now(), note: 'Peman ID Carte apwouve' });
-  saveDB(DB);
-  toast('✅ ID Carte ' + kl.nom + ' valide! Kat aktif pou 3 mwa.', 'success');
+  _lsSave(DB);
   renderAdminCardRequests(); refreshStats();
+  await saveDBCritical(DB);
+  toast('✅ ID Carte ' + kl.nom + ' valide! Kat aktif pou 3 mwa.', 'success');
 }
 
-function adminRejectCardIDRequest(reqId) {
+async function adminRejectCardIDRequest(reqId) {
+  await refreshDBFromCloud();
   DB.cardRequests = DB.cardRequests || [];
   var req = DB.cardRequests.find(function(r){ return r.id == reqId && r.type === 'id'; });
-  if (!req || req.statut !== 'pending') { toast('Demann pa jwenn', 'error'); return; }
+  if (!req || req.statut !== 'pending') { toast('Demann pa jwenn oswa deja trete', 'error'); renderAdminCardRequests(); return; }
   req.statut = 'rejected'; req.rejectedAt = Date.now();
-  saveDB(DB);
+  _lsSave(DB);
+  renderAdminCardRequests();
+  await saveDBCritical(DB);
   toast('❌ Demann ID Carte pou ' + (req.kliyanNom||'kliyan') + ' rejte', 'info');
   renderAdminCardRequests();
 }
 
-function adminApprovePhysicalCard(reqId) {
+async function adminApprovePhysicalCard(reqId) {
+  await refreshDBFromCloud();
   DB.cardRequests = DB.cardRequests || [];
   var req = DB.cardRequests.find(function(r){ return r.id == reqId && r.type === 'physical'; });
-  if (!req || req.statut !== 'pending') { toast('Demann pa jwenn', 'error'); return; }
+  if (!req || req.statut !== 'pending') { toast('Demann pa jwenn oswa deja trete', 'error'); renderAdminCardRequests(); return; }
   var kl = DB.kliyan.find(function(k){ return k.id == req.kliyanId; });
   req.statut = 'approved'; req.approvedAt = Date.now();
   DB.tx.push({ id: Date.now(), type: 'physical_card_fee', montan: req.montan, carteID: kl?kl.carteID:'',
     clNom: req.kliyanNom, ref: req.ref, date: Date.now(), note: 'Peman Kat Fizik apwouve — kat ap prepare' });
-  saveDB(DB);
-  toast('✅ Demann Kat Fizik pou ' + req.kliyanNom + ' apwouve — kat ap prepare', 'success');
+  _lsSave(DB);
   renderAdminCardRequests(); refreshStats();
+  await saveDBCritical(DB);
+  toast('✅ Demann Kat Fizik pou ' + req.kliyanNom + ' apwouve — kat ap prepare', 'success');
 }
 
-function adminRejectPhysicalCard(reqId) {
+async function adminRejectPhysicalCard(reqId) {
+  await refreshDBFromCloud();
   DB.cardRequests = DB.cardRequests || [];
   var req = DB.cardRequests.find(function(r){ return r.id == reqId && r.type === 'physical'; });
-  if (!req || req.statut !== 'pending') { toast('Demann pa jwenn', 'error'); return; }
+  if (!req || req.statut !== 'pending') { toast('Demann pa jwenn oswa deja trete', 'error'); renderAdminCardRequests(); return; }
   req.statut = 'rejected'; req.rejectedAt = Date.now();
-  saveDB(DB);
+  _lsSave(DB);
+  renderAdminCardRequests();
+  await saveDBCritical(DB);
   toast('❌ Demann Kat Fizik pou ' + (req.kliyanNom||'kliyan') + ' rejte', 'info');
   renderAdminCardRequests();
 }
@@ -4656,31 +4745,42 @@ function renderAdminRechargeRequests() {
   }).join('');
 }
 
-function adminApproveRecharge(reqId) {
+async function adminApproveRecharge(reqId) {
+  await refreshDBFromCloud();
   DB.rechargeRequests = DB.rechargeRequests || [];
   var req = DB.rechargeRequests.find(function(r){ return r.id == reqId; });
-  if (!req || req.statut !== 'pending') { toast('Demann pa jwenn', 'error'); return; }
+  if (!req || req.statut !== 'pending') { toast('Demann pa jwenn oswa deja trete', 'error'); renderAdminRechargeRequests(); return; }
   var kl = DB.kliyan.find(function(k){ return k.id == req.kliyanId; });
   if (!kl) { toast('Kliyan pa jwenn ankò', 'error'); return; }
-  if (kl.bloke) { toast('🔒 Kart kliyan sa bloke — apwobasyson refize', 'error'); req.statut = 'rejected'; saveDB(DB); renderAdminRechargeRequests(); return; }
+  if (kl.bloke) {
+    req.statut = 'rejected';
+    _lsSave(DB);
+    renderAdminRechargeRequests();
+    await saveDBCritical(DB);
+    toast('🔒 Kart kliyan sa bloke — apwobasyson refize', 'error');
+    return;
+  }
   kl.balans = (kl.balans || 0) + req.montan;
   DB.kliyan = DB.kliyan.map(function(k){ return k.id == kl.id ? kl : k; });
   req.statut = 'approved'; req.approvedAt = Date.now();
   DB.tx.push({ id: Date.now(), type: 'recharge', montan: req.montan, carteID: req.carteID,
     clNom: req.kliyanNom, ref: req.ref, date: Date.now(), note: 'Rechaj kliyan apwouve pa admin' });
-  saveDB(DB);
-  toast('✅ Rechaj ' + req.montan.toLocaleString() + ' HTG apwouve pou ' + req.kliyanNom, 'success');
+  _lsSave(DB);
   renderAdminRechargeRequests(); refreshStats();
+  await saveDBCritical(DB);
+  toast('✅ Rechaj ' + req.montan.toLocaleString() + ' HTG apwouve pou ' + req.kliyanNom, 'success');
 }
 
-function adminRejectRecharge(reqId) {
+async function adminRejectRecharge(reqId) {
+  await refreshDBFromCloud();
   DB.rechargeRequests = DB.rechargeRequests || [];
   var req = DB.rechargeRequests.find(function(r){ return r.id == reqId; });
-  if (!req || req.statut !== 'pending') { toast('Demann pa jwenn', 'error'); return; }
+  if (!req || req.statut !== 'pending') { toast('Demann pa jwenn oswa deja trete', 'error'); renderAdminRechargeRequests(); return; }
   req.statut = 'rejected'; req.rejectedAt = Date.now();
-  saveDB(DB);
-  toast('❌ Demann rechaj pou ' + (req.kliyanNom||'kliyan') + ' rejte', 'info');
+  _lsSave(DB);
   renderAdminRechargeRequests();
+  await saveDBCritical(DB);
+  toast('❌ Demann rechaj pou ' + (req.kliyanNom||'kliyan') + ' rejte', 'info');
 }
 
 /* ─── 5. KLIYAN SIPRIME KOT LI ─── */
