@@ -107,7 +107,8 @@ function _loadFirebaseScripts() {
     const ok1 = await _loadScript('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js', 8000);
     if (!ok1) { FIREBASE_OK = false; _fbLoadingPromise = null; return false; }
     const ok2 = await _loadScript('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js', 8000);
-    FIREBASE_OK = ok1 && ok2;
+    const ok3 = await _loadScript('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js', 8000);
+    FIREBASE_OK = ok1 && ok2 && ok3;
     _fbScriptsLoaded = FIREBASE_OK;
     _fbLoadingPromise = null; // si l echwe, sa a rete null pou pèmèt reeseye
     return FIREBASE_OK;
@@ -544,6 +545,9 @@ html[data-theme="light"] .terminal{background:rgba(248,250,252,.9);border-color:
         <div class="qa" onclick="openMo('mo-reset-pin')">
           <div class="qa-ico">🔑</div><div class="qa-lbl">Reset PIN</div>
         </div>
+        <div class="qa" onclick="openMo('mo-change-pass')">
+          <div class="qa-ico">🔐</div><div class="qa-lbl">Chanje Modpas</div>
+        </div>
         <div class="qa" onclick="openMo('mo-istwa-cl')">
           <div class="qa-ico">📊</div><div class="qa-lbl">Istwa</div>
         </div>
@@ -832,6 +836,25 @@ html[data-theme="light"] .terminal{background:rgba(248,250,252,.9);border-color:
     </div>
     <button class="btn btn-p" id="btn-reset-pin" onclick="resetPin()">✓ Konfime PIN Nouvo</button>
     <button class="btn btn-o" style="margin-top:10px" onclick="closeMo('mo-reset-pin')">Anile</button>
+  </div>
+</div>
+
+<div id="mo-change-pass" class="mo hidden" onclick="closeMo('mo-change-pass')">
+  <div class="mo-box" onclick="event.stopPropagation()">
+    <div class="mo-handle"></div>
+    <div class="mo-title">🔐 Chanje Mo De Pas</div>
+    <p style="color:var(--gr);margin-bottom:20px;line-height:1.6">Mo de pas ou ka gen otan karaktè ou vle (minimòm 6).</p>
+    <div class="ig"><label>Mo De Pas Aktyèl</label>
+      <input type="password" id="cp-current" placeholder="Mo de pas ou genyen kounye a">
+    </div>
+    <div class="ig"><label>Nouvo Mo De Pas</label>
+      <input type="password" id="cp-new" placeholder="Minimòm 6 karaktè">
+    </div>
+    <div class="ig"><label>Konfime Nouvo Mo De Pas</label>
+      <input type="password" id="cp-confirm" placeholder="Tape l ankò">
+    </div>
+    <button class="btn btn-p" id="btn-change-pass" onclick="changeClientPassword()">✓ Chanje Mo De Pas</button>
+    <button class="btn btn-o" style="margin-top:10px" onclick="closeMo('mo-change-pass')">Anile</button>
   </div>
 </div>
 
@@ -1175,7 +1198,7 @@ html[data-theme="light"] .terminal{background:rgba(248,250,252,.9);border-color:
 ═══════════════════════════════════════════════════════════════ */
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBq1w2MV9YmQYe7sVHxS2VHi",
+  apiKey: "AIzaSyBq1w2MV9YmQYe7sVHxS2VHiKvs7FCriws",
   authDomain: "ayipay-75f0c.firebaseapp.com",
   databaseURL: "https://ayipay-75f0c-def",
   projectId: "ayipay-75f0c",
@@ -1187,6 +1210,8 @@ const firebaseConfig = {
 
 /* ── Hybrid: Firebase si disponib, localStorage kòm fallback ── */
 var db_fire = null;
+var auth_fire = null;
+const ADMIN_AUTH_EMAIL = 'admin@ayipay-app.internal';
 var DB = { kliyan: [], machand: [], tx: [], retraits: [], payConfig: {} };
 var ADMIN_CODE = localStorage.getItem('_ayipay_admin_code') || '05042005W';
 var STATE = { role:null, user:null, termAmt:'0', pendingTx:null, scannedKliyan:null };
@@ -1233,8 +1258,44 @@ async function _initFirebase() {
       }
     }
     db_fire = firebase.firestore();
+    auth_fire = firebase.auth();
     return true;
   } catch(e) { return false; }
+}
+
+/* ═══ FIREBASE AUTH REYÈL POU KLIYAN (pou wallets sekirize) ═══
+   Chak kliyan gen yon vrè kont Firebase Auth ki lye ak imel li.
+   Si li poko genyen youn (ansyen kont anvan mizajou sa a), li kreye
+   l otomatikman lè l konekte ak mo de pas li deja konnen an. */
+async function ensureClientAuth(kliyan, plainPass) {
+  try {
+    if (!db_fire) { var ok = await _initFirebase(); if (!ok) return null; }
+    if (!auth_fire) return null;
+    if (kliyan.authUid) {
+      const cred = await auth_fire.signInWithEmailAndPassword(kliyan.email, plainPass);
+      return cred.user.uid;
+    }
+    // Lazy migration: ansyen kont san Firebase Auth
+    try {
+      const cred = await auth_fire.createUserWithEmailAndPassword(kliyan.email, plainPass);
+      kliyan.authUid = cred.user.uid;
+      saveDB(DB);
+      return cred.user.uid;
+    } catch(errCreate) {
+      if (errCreate.code === 'auth/email-already-in-use') {
+        // Kont Auth te deja kreye yon lòt fwa men authUid pa t sove — konekte sèlman
+        const cred2 = await auth_fire.signInWithEmailAndPassword(kliyan.email, plainPass);
+        kliyan.authUid = cred2.user.uid;
+        saveDB(DB);
+        return cred2.user.uid;
+      }
+      throw errCreate;
+    }
+  } catch(e) {
+    console.warn('ensureClientAuth pa reyisi (app la kontinye mache nòmal):', e && e.message);
+    try { toast('⚠️ Auth link: ' + (e && e.code ? e.code : (e && e.message ? e.message : 'erè enkoni')), 'error'); } catch(t) {}
+    return null;
+  }
 }
 
 /* ═══ LOAD DATA — Firebase oubyen localStorage ═══ */
@@ -1261,7 +1322,10 @@ async function loadDB() {
   const fb = await _initFirebase();
   if (fb && db_fire) {
     try {
-      const snap = await db_fire.collection('ayipay').doc('data').get();
+      const snap = await Promise.race([
+        db_fire.collection('ayipay').doc('data').get(),
+        new Promise(function(_, rej){ setTimeout(function(){ rej(new Error('Firestore timeout')); }, 8000); })
+      ]);
       if (snap.exists) {
         DB = snap.data();
         DB.kliyan = DB.kliyan || [];
@@ -1399,6 +1463,7 @@ async function _flushToFirebase(db, force) {
     _lastSyncError = null;
     setSyncDot('green');
     localLog('✅ Firebase sync: ' + db.kliyan.length + ' kliyan, ' + txCloud.length + ' tx');
+    try { syncMyWallet(); } catch(e) {}
     return true;
   } catch(e) {
     // KRITIK: kenbe _savePending=true pou boukle otomatik la (pi ba)
@@ -1539,8 +1604,9 @@ function cleanupOldData() {
 function createTransaction(from_id, from_role, to_id, to_role, amount, type, desc) {
   // Rezoud non moun pou afichaj
   var fromNom = '—', toNom = '—';
+  var kl = null, kl2 = null;
   if (from_role === 'kliyan') {
-    var kl = DB.kliyan.find(function(k){ return k.id == from_id; });
+    kl = DB.kliyan.find(function(k){ return k.id == from_id; });
     fromNom = kl ? kl.nom : 'Kliyan';
   } else if (from_role === 'machand') {
     var ma = DB.machand.find(function(m){ return m.id == from_id; });
@@ -1548,12 +1614,16 @@ function createTransaction(from_id, from_role, to_id, to_role, amount, type, des
   } else { fromNom = 'Admin'; }
 
   if (to_role === 'kliyan') {
-    var kl2 = DB.kliyan.find(function(k){ return k.id == to_id; });
+    kl2 = DB.kliyan.find(function(k){ return k.id == to_id; });
     toNom = kl2 ? kl2.nom : 'Kliyan';
   } else if (to_role === 'machand') {
     var ma2 = DB.machand.find(function(m){ return m.id == to_id; });
     toNom = ma2 ? ma2.nomBoutik : 'Machand';
   } else { toNom = 'Admin'; }
+
+  // Idantifye kliyan ki konsène a (si genyen) pou carteID/clNom parèt kòrèkteman
+  // nan LISTWA konplè a (renderIstwaClient filtre pa carteID), pa sèlman nan dashboard la.
+  var relatedKliyan = kl || kl2;
 
   var tx = {
     id: 'TX-' + Date.now(),
@@ -1569,7 +1639,9 @@ function createTransaction(from_id, from_role, to_id, to_role, amount, type, des
     description: desc || '',
     status: 'completed',
     timestamp: Date.now(),
-    date: Date.now()
+    date: Date.now(),
+    carteID: relatedKliyan ? relatedKliyan.carteID : undefined,
+    clNom: relatedKliyan ? relatedKliyan.nom : undefined
   };
   DB.tx = DB.tx || [];
   DB.tx.push(tx);
@@ -1602,6 +1674,7 @@ async function adminDepositClient() {
   // KRITIK: voye sou Firebase IMEDYATMAN e ATANN konfimasyon reyèl
   try {
     await saveDBCritical(DB);
+    try { await syncClientWalletAsAdmin(klient); } catch(e) {}
     toast('✅ ' + amount + ' HTG dèpoze pou ' + klient.nom + ' (Nouvo Balans: ' + klient.balans.toLocaleString() + ' HTG)', 'success');
     setBtn('btn-deposit', false, '✅ Konfime Dépôt');
     document.getElementById('deposit-email').value = '';
@@ -1794,6 +1867,139 @@ function renderAdminTransactions() {
 /* ═══════════════════════════════════════════════════════════════
    CLIENT FUNCTIONS
 ═══════════════════════════════════════════════════════════════ */
+/* ═══ WALLETS SEKIRIZE (pou Wing ka verifye/dediwi balans an tan reyèl) ═══
+   Chak kliyan gen yon dokiman wallets/{authUid} separe ki se sèl vrè
+   sous balans lan pou operasyon ki soti deyò AyiPay (tankou Wing). */
+async function syncMyWallet() {
+  try {
+    if (!db_fire || !auth_fire || !auth_fire.currentUser) return;
+    var uid = auth_fire.currentUser.uid;
+    var ref = db_fire.collection('wallets').doc(uid);
+
+    var myBalans = null;
+    if (STATE.role === 'client' && STATE.user) {
+      myBalans = STATE.user.balans || 0;
+    } else {
+      var kl = (DB.kliyan || []).find(function(k){ return k.authUid === uid; });
+      if (kl) myBalans = kl.balans || 0;
+    }
+    if (myBalans === null) return;
+
+    /* IMPORTANT: li kloud la ANVAN nou ekri. Si Wing (oswa nenpòt lòt sistèm deyò)
+       te dediwi lajan pandan AyiPay te fèmen, kloud la ap gen yon balans pi ba pase
+       sa nou konnen lokalman. Nan ka sa a, nou dwe ADOPTE valè kloud la lokalman
+       olye pou nou ekrase l ak ansyen valè lokal la (sa te koze bug "lajan pa soti"). */
+    var snap = await ref.get();
+    var cloudBalans = snap.exists ? snap.data().balans : null;
+
+    if (typeof cloudBalans === 'number' && cloudBalans < myBalans) {
+      var klForReceipt = (DB.kliyan || []).find(function(k){ return k.authUid === uid; });
+      try { await recordWingPurchaseReceipts(uid, klForReceipt); } catch(e) { console.warn('recordWingPurchaseReceipts echwe:', e && e.message); }
+      myBalans = cloudBalans;
+      if (STATE.role === 'client' && STATE.user) STATE.user.balans = cloudBalans;
+      var kl2 = (DB.kliyan || []).find(function(k){ return k.authUid === uid; });
+      if (kl2) kl2.balans = cloudBalans;
+      _lsSave(DB);
+      try { renderClBalance(); } catch(e) {}
+      try { renderClTx(); } catch(e) {}
+    }
+
+    await ref.set({ balans: myBalans, updated: Date.now() }, { merge: true });
+  } catch(e) { console.warn('syncMyWallet echwe:', e && e.message); }
+}
+
+/* ═══ REÇU ACHA WING ═══
+   Chak fwa nou remake balans lan te desann pandan nou pa t ap gade (siy yon acha
+   Wing), nou al chèche dokiman ki nan wing_purchases pou uid sa a e nou kreye yon
+   vrè liy tranzaksyon lokal (avèk non APK la) pou moun nan wè yon resi klè,
+   olye pou l wè yon balans ki desann san eksplikasyon. */
+async function recordWingPurchaseReceipts(uid, klRef) {
+  if (!db_fire || !uid) return;
+  var lastKey = '_wing_last_synced_' + uid;
+  var lastSynced = parseInt(localStorage.getItem(lastKey) || '0', 10);
+
+  var q = await db_fire.collection('wing_purchases').where('uid', '==', uid).get();
+  var newOnes = q.docs
+    .map(function(d){ return Object.assign({ _id: d.id }, d.data()); })
+    .filter(function(p){ return (p.date || 0) > lastSynced; })
+    .sort(function(a, b){ return (a.date || 0) - (b.date || 0); });
+
+  if (!newOnes.length) { localStorage.setItem(lastKey, String(Date.now())); return; }
+
+  var carteID = klRef ? klRef.carteID : (STATE.user ? STATE.user.carteID : undefined);
+  var clNom = klRef ? klRef.nom : (STATE.user ? STATE.user.nom : undefined);
+  var kliyanId = klRef ? klRef.id : (STATE.user ? STATE.user.id : undefined);
+
+  newOnes.forEach(function(p){
+    DB.tx = DB.tx || [];
+    DB.tx.push({
+      id: 'WING-' + (p._id || p.date || Date.now()),
+      type: 'wing_purchase',
+      montan: p.price || 0,
+      amount: p.price || 0,
+      clNom: clNom,
+      carteID: carteID,
+      from_id: kliyanId,
+      from_role: 'kliyan',
+      to_role: 'wing',
+      to_nom: 'Wing APK Downloader',
+      description: 'Acha APK sou Wing: ' + (p.apkName || ''),
+      apkName: p.apkName || '',
+      date: p.date || Date.now(),
+      timestamp: p.date || Date.now(),
+      status: 'completed',
+      source: 'wing'
+    });
+  });
+
+  var maxDate = newOnes.reduce(function(m, p){ return Math.max(m, p.date || 0); }, lastSynced);
+  localStorage.setItem(lastKey, String(maxDate));
+  _lsSave(DB);
+}
+async function syncClientWalletAsAdmin(kliyan) {
+  try {
+    if (!db_fire || !kliyan || !kliyan.authUid) return;
+    var ref = db_fire.collection('wallets').doc(kliyan.authUid);
+
+    /* Menm koreksyon ak syncMyWallet(): li kloud la anvan, pou dediksyon Wing
+       fè pandan admin pa t gade kliyan sa a pa ekrase san rezon. */
+    var snap = await ref.get();
+    var cloudBalans = snap.exists ? snap.data().balans : null;
+    var localBalans = kliyan.balans || 0;
+
+    if (typeof cloudBalans === 'number' && cloudBalans < localBalans) {
+      try { await recordWingPurchaseReceipts(kliyan.authUid, kliyan); } catch(e) { console.warn('recordWingPurchaseReceipts (admin) echwe:', e && e.message); }
+      localBalans = cloudBalans;
+      kliyan.balans = cloudBalans; // korije referans lokal admin nan gen sou kliyan an tou
+      var klIdx = (DB.kliyan || []).find(function(k){ return k.authUid === kliyan.authUid; });
+      if (klIdx) klIdx.balans = cloudBalans;
+      _lsSave(DB);
+    }
+
+    await ref.set({ balans: localBalans, updated: Date.now() }, { merge: true });
+  } catch(e) { console.warn('syncClientWalletAsAdmin echwe:', e && e.message); }
+}
+/* Koute chanjman an tan reyèl sou pwòp wallet mwen (Wing ka dediwi l dirèkteman) */
+var _myWalletUnsub = null;
+function listenMyWallet(uid) {
+  try {
+    if (!db_fire || !uid) return;
+    if (_myWalletUnsub) { _myWalletUnsub(); _myWalletUnsub = null; }
+    _myWalletUnsub = db_fire.collection('wallets').doc(uid).onSnapshot(function(snap) {
+      if (!snap.exists) return;
+      var cloudBalans = snap.data().balans;
+      if (typeof cloudBalans !== 'number') return;
+      if (STATE.role === 'client' && STATE.user && cloudBalans !== STATE.user.balans) {
+        STATE.user.balans = cloudBalans;
+        var kl = (DB.kliyan || []).find(function(k){ return k.id === STATE.user.id; });
+        if (kl) kl.balans = cloudBalans;
+        _lsSave(DB);
+        try { renderClBalance(); } catch(e) {}
+      }
+    });
+  } catch(e) { console.warn('listenMyWallet echwe:', e && e.message); }
+}
+
 function renderClBalance() {
   var el = document.getElementById('cl-balance');
   if (el && STATE.user) {
@@ -2863,6 +3069,7 @@ function signupClient() {
     if (done) return;
     done = true;
     toast('✨ Kont kreye! Konekte mèsye','success');
+    ensureClientAuth(kliyan, pass); // kreye vrè kont Firebase Auth an background
     closeMo('mo-signup-cl');
     clrForm(['sc-nom','sc-email','sc-tel','sc-pass']);
     setBtn('btn-sc',false,'✨ Kreye Kont');
@@ -2886,6 +3093,27 @@ function signupClient() {
   }, 2000);
 }
 
+/* ═══ FIREBASE AUTH POU ADMIN (pou dwa espesyal sou wallets, mt: depo) ═══ */
+async function ensureAdminAuth(plainCode) {
+  try {
+    if (!db_fire) { var ok = await _initFirebase(); if (!ok) return null; }
+    if (!auth_fire) return null;
+    try {
+      const cred = await auth_fire.signInWithEmailAndPassword(ADMIN_AUTH_EMAIL, plainCode);
+      return cred.user.uid;
+    } catch(errIn) {
+      if (errIn.code === 'auth/user-not-found' || errIn.code === 'auth/invalid-credential' || errIn.code === 'auth/invalid-login-credentials') {
+        const cred2 = await auth_fire.createUserWithEmailAndPassword(ADMIN_AUTH_EMAIL, plainCode);
+        return cred2.user.uid;
+      }
+      throw errIn;
+    }
+  } catch(e) {
+    console.warn('ensureAdminAuth pa reyisi (panel admin kontinye mache nòmal):', e && e.message);
+    return null;
+  }
+}
+
 /* ═══ LOGIN ═══ */
 function loginAdmin() {
   var el = document.getElementById('ad-password');
@@ -2893,6 +3121,8 @@ function loginAdmin() {
   if(!code){ toast('Antre kòd la','error'); return; }
   if(code!==ADMIN_CODE){ toast('Kòd enkorèk','error'); if(el) el.value=''; return; }
   
+  ensureAdminAuth(code); // background: kreye/konekte kont Firebase Auth admin
+
   // Hide password from display (security)
   if (el) el.value = '';
   
@@ -2923,6 +3153,9 @@ function loginClient() {
     } catch(e) {}
     try { renderClTx(); } catch(e) { console.warn('renderClTx err:',e); }
     toast('Byenveni '+(found.nom||'').split(' ')[0]+'!','success');
+    ensureClientAuth(found, pass).then(function(uid){ // background: pa bloke koneksyon an
+      if (uid) { syncMyWallet(); listenMyWallet(uid); }
+    });
     document.getElementById('cl-pass').value = '';
   } catch(e) {
     console.error('loginClient err:',e);
@@ -2943,14 +3176,16 @@ function renderClTx() {
   if(!txs.length){ el.innerHTML='<div class="empty"><div class="empty-ico">📭</div>Pa gen tranzaksyon toujou</div>'; return; }
   el.innerHTML='<div class="tx-list">'+txs.slice(0,4).map(function(tx){
     // Check transaction type
-    var isRch = tx.type==='recharge';
-    var isWithdrawal = tx.type==='retrè';
-    
+    var CREDIT_TYPES = ['recharge','deposit'];
+    var isRch = CREDIT_TYPES.indexOf(tx.type) !== -1;
+    var isWithdrawal = tx.type==='withdrawal' || tx.type==='retrè';
+    var isWing = tx.type==='wing_purchase';
+
     // Set colors and signs based on type
     var amtClass = isRch ? 'cr' : 'db';
     var amtSign = isRch ? '+' : '-';
-    var icon = isRch ? '⬆️' : (isWithdrawal ? '💸' : '💸');
-    var desc = isWithdrawal ? 'Retrè' : (tx.maNom || (isRch ? 'Recharge' : 'Paiement'));
+    var icon = isRch ? '⬆️' : (isWithdrawal ? '💸' : (isWing ? '📲' : '💸'));
+    var desc = isWithdrawal ? 'Retrè' : (isWing ? ('Wing: '+(tx.apkName||'Acha')) : (tx.maNom || (isRch ? (tx.type==='deposit'?'Dépôt':'Recharge') : 'Paiement')));
     
     return '<div class="tx-item">'+
       '<div class="tx-ico '+amtClass+'">'+icon+'</div>'+
@@ -3116,6 +3351,53 @@ function resetPin() {
   closeMo('mo-reset-pin');
   clearPin('np',6);
   setBtn('btn-reset-pin',false,'✓ Konfime PIN Nouvo');
+}
+
+/* ═══ CHANJE MO DE PAS (senkwonize blòk lokal AN + Firebase Auth) ═══ */
+async function changeClientPassword() {
+  if(!STATE.user) return;
+  var current = document.getElementById('cp-current').value;
+  var np = document.getElementById('cp-new').value;
+  var confirm = document.getElementById('cp-confirm').value;
+  if(!current){ toast('Antre mo de pas aktyèl ou','error'); return; }
+  if(np.length<6){ toast('Nouvo mo de pas la dwe gen omwen 6 karaktè','error'); return; }
+  if(np!==confirm){ toast('De mo de pas yo pa menm','error'); return; }
+  var kl = DB.kliyan.find(function(k){ return k.id===STATE.user.id; });
+  if(!kl){ toast('Erè: kont pa jwenn','error'); return; }
+  if(current!==kl.pass){ toast('Mo de pas aktyèl la pa kòrèk','error'); return; }
+
+  setBtn('btn-change-pass',true);
+  try {
+    // Senkwonize Firebase Auth an premye (sa a pwoteje aksè Wing/lòt app ki lye)
+    if (!db_fire) await _initFirebase();
+    if (auth_fire) {
+      var uid = kl.authUid;
+      if (!uid) {
+        uid = await ensureClientAuth(kl, current);
+      } else if (!auth_fire.currentUser || auth_fire.currentUser.uid !== uid) {
+        await auth_fire.signInWithEmailAndPassword(kl.email, current);
+      }
+      if (auth_fire.currentUser) {
+        await auth_fire.currentUser.updatePassword(np);
+      }
+    }
+    // Kounye a chanje blòk lokal la
+    kl.pass = np;
+    _lsSave(DB);
+    await saveDBCritical(DB);
+    toast('✅ Mo de pas ou chanje avèk siksè','success');
+    closeMo('mo-change-pass');
+    document.getElementById('cp-current').value='';
+    document.getElementById('cp-new').value='';
+    document.getElementById('cp-confirm').value='';
+  } catch(e) {
+    var msg = (e && e.code === 'auth/requires-recent-login')
+      ? 'Pou rezon sekirite, dekonekte epi rekonekte anvan w chanje mo de pas ou'
+      : 'Erè: ' + (e && e.message ? e.message : e);
+    toast(msg,'error');
+  } finally {
+    setBtn('btn-change-pass',false,'✓ Chanje Mo De Pas');
+  }
 }
 
 /* ═══ NUMPAD ═══ */
@@ -3367,21 +3649,23 @@ function renderIstwaClient() {
   
   el.innerHTML='<div class="tx-list">'+txs.map(function(tx){
     // Determine transaction type
-    var isRch = tx.type==='recharge';
+    var CREDIT_TYPES = ['recharge','deposit'];
+    var isRch = CREDIT_TYPES.indexOf(tx.type) !== -1;
     var isPayment = tx.type==='achat';
-    var isWithdrawal = tx.type==='retrè';
+    var isWithdrawal = tx.type==='withdrawal' || tx.type==='retrè';
+    var isWing = tx.type==='wing_purchase';
     
     // Set icon based on type
-    var icon = isRch ? '⬆️' : (isWithdrawal ? '💸' : '💸');
+    var icon = isRch ? '⬆️' : (isWithdrawal ? '💸' : (isWing ? '📲' : '💸'));
     
-    // Set color class - GREEN for recharge, RED for payments/withdrawals
+    // Set color class - GREEN for recharge/deposit, RED for payments/withdrawals
     var amtClass = isRch ? 'cr' : 'db';
     
-    // Set sign - + for recharge, - for everything else
+    // Set sign - + for recharge/deposit, - for everything else
     var amtSign = isRch ? '+' : '-';
     
     // Set description
-    var desc = tx.clNom || tx.maNom || (isRch ? 'Recharge' : (isWithdrawal ? 'Retrè' : 'Paiement'));
+    var desc = isWing ? ('Wing: '+(tx.apkName||'Acha')) : (tx.type==='deposit' ? 'Dépôt' : (tx.clNom || tx.maNom || (isRch ? 'Recharge' : (isWithdrawal ? 'Retrè' : 'Paiement'))));
     
     return '<div class="tx-item" style="cursor:pointer" onclick="showTxDetail('+tx.id+')">'+
       '<div class="tx-ico '+amtClass+'">'+icon+'</div>'+
@@ -4307,11 +4591,25 @@ async function checkHaitiAccess() {
 (async function() {
   console.log('🚀 AyiPay Faz 3 — Firebase Optimize Mode');
 
+  // FILÈ SEKIRITE: kèlkeswa sa k ap pase pandan demaraj la, pa janm kite
+  // ekran chajman an rete bloke pou plis pase 15 segond.
+  var _bootDone = false;
+  var _failsafeTimer = setTimeout(function() {
+    if (_bootDone) return;
+    _bootDone = true;
+    console.warn('⚠️ Boot failsafe: demaraj pran twò lontan, kontinye kanmenm');
+    try { document.getElementById('scr-load').classList.add('hidden'); } catch(e) {}
+    try { initTheme(); } catch(e) {}
+    try { show('scr-welcome'); } catch(e) {}
+  }, 15000);
+
   var haitiOk = true;
   try { haitiOk = await checkHaitiAccess(); } catch(e) { haitiOk = true; }
   if (!haitiOk) {
     document.getElementById('scr-load').classList.add('hidden');
     show('scr-geoblock');
+    _bootDone = true;
+    clearTimeout(_failsafeTimer);
     return;
   }
 
@@ -4360,6 +4658,8 @@ async function checkHaitiAccess() {
   initTheme();
   try { updateWhatsAppButton(); } catch(e) {}
   show('scr-welcome');
+  _bootDone = true;
+  clearTimeout(_failsafeTimer);
 })();
 </script>
 
