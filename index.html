@@ -198,6 +198,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--nv);color:#fff
 .inp::placeholder{color:var(--gr2)}
 
 .pin-row{display:flex;gap:8px;justify-content:center}
+.remembered-email-chip{display:flex;align-items:center;justify-content:space-between;gap:8px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);border-radius:10px;padding:12px 14px;font-size:14px;color:#fff}
+.remembered-email-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip-x{background:none;border:none;color:var(--bl);font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;padding:4px 6px}
 .pc{width:46px;height:56px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);border-radius:10px;color:#fff;font-size:22px;font-weight:700;text-align:center;outline:none;transition:border-color .2s}
 .pc:focus{border-color:var(--bl);background:rgba(56,189,248,.06)}
 .pc.yw:focus{border-color:var(--yw);background:rgba(245,158,11,.06)}
@@ -456,7 +459,7 @@ html[data-theme="light"] .terminal{background:rgba(248,250,252,.9);border-color:
   </div>
   <div class="login-body">
     <span class="badge cl">👤 Kliyan</span>
-    <div class="ig"><label>Imel</label>
+    <div class="ig" id="cl-email-wrap"><label>Imel</label>
       <input class="inp" type="email" id="cl-email" placeholder="ou@mail.com" autocomplete="email"></div>
     <div class="ig"><label>Modpas</label>
       <input class="inp" type="password" id="cl-pass" placeholder="••••••••"></div>
@@ -475,7 +478,7 @@ html[data-theme="light"] .terminal{background:rgba(248,250,252,.9);border-color:
   </div>
   <div class="login-body">
     <span class="badge ma">🏪 Machand</span>
-    <div class="ig"><label>Imel</label>
+    <div class="ig" id="ma-email-wrap"><label>Imel</label>
       <input class="inp" type="email" id="ma-email" placeholder="boutik@mail.com" autocomplete="email"></div>
     <div class="ig"><label>Modpas</label>
       <input class="inp" type="password" id="ma-pass" placeholder="••••••••"></div>
@@ -626,7 +629,8 @@ html[data-theme="light"] .terminal{background:rgba(248,250,252,.9);border-color:
     <div>
       <div class="sec-hdr"><h3>Aksyon</h3></div>
       <button class="btn btn-o" onclick="openMo('mo-merchant-sell')" style="width:100%;margin-bottom:8px">🛒 Vann an Men</button>
-      <button class="btn btn-o" onclick="openMo('mo-demand-ret')" style="width:100%">💵 Mande Retrè Lajan</button>
+      <button class="btn btn-o" onclick="openMo('mo-demand-ret')" style="width:100%;margin-bottom:8px">💵 Mande Retrè Lajan</button>
+      <button class="btn btn-o" onclick="openMo('mo-change-pass-ma')" style="width:100%">🔐 Chanje Modpas</button>
     </div>
     <div>
       <div class="sec-hdr" style="display:flex;justify-content:space-between;align-items:center">
@@ -777,7 +781,7 @@ html[data-theme="light"] .terminal{background:rgba(248,250,252,.9);border-color:
       <div class="ig"><label>Non Konplè</label><input class="inp" id="sc-nom" placeholder="Jean Baptiste Pierre"></div>
       <div class="ig"><label>Imel</label><input class="inp" type="email" id="sc-email" placeholder="jean@mail.com"></div>
       <div class="ig"><label>Telefòn</label><input class="inp" type="tel" id="sc-tel" placeholder="+509 XXXX XXXX"></div>
-      <div class="ig"><label>Modpas (min. 6 karaktè)</label><input class="inp" type="password" id="sc-pass" placeholder="••••••••"></div>
+      <div class="ig"><label>Modpas (6-16 karaktè)</label><input class="inp" type="password" id="sc-pass" maxlength="16" placeholder="••••••••"></div>
       <button class="btn btn-p" id="btn-sc" onclick="signupClient()">✨ Kreye Kont</button>
       <button class="btn btn-o" onclick="closeMo('mo-signup-cl')">Anile</button>
     </div>
@@ -826,12 +830,12 @@ html[data-theme="light"] .terminal{background:rgba(248,250,252,.9);border-color:
     <p style="color:var(--gr);margin-bottom:20px;line-height:1.6">Antre yon PIN 6 chif nouvo pou konfime paiement.</p>
     <div class="ig"><label>PIN Nouvo (6 chif)</label>
       <div class="pin-row" style="margin-bottom:6px">
-        <input class="pc" type="password" maxlength="1" inputmode="numeric" id="np0" oninput="pnav('np',0)">
-        <input class="pc" type="password" maxlength="1" inputmode="numeric" id="np1" oninput="pnav('np',1)">
-        <input class="pc" type="password" maxlength="1" inputmode="numeric" id="np2" oninput="pnav('np',2)">
-        <input class="pc" type="password" maxlength="1" inputmode="numeric" id="np3" oninput="pnav('np',3)">
-        <input class="pc" type="password" maxlength="1" inputmode="numeric" id="np4" oninput="pnav('np',4)">
-        <input class="pc" type="password" maxlength="1" inputmode="numeric" id="np5" oninput="pnav('np',5)">
+        <input class="pc" type="password" maxlength="1" inputmode="numeric" id="np0" oninput="pnav('np',0)" onkeydown="pback('np',0,event)">
+        <input class="pc" type="password" maxlength="1" inputmode="numeric" id="np1" oninput="pnav('np',1)" onkeydown="pback('np',1,event)">
+        <input class="pc" type="password" maxlength="1" inputmode="numeric" id="np2" oninput="pnav('np',2)" onkeydown="pback('np',2,event)">
+        <input class="pc" type="password" maxlength="1" inputmode="numeric" id="np3" oninput="pnav('np',3)" onkeydown="pback('np',3,event)">
+        <input class="pc" type="password" maxlength="1" inputmode="numeric" id="np4" oninput="pnav('np',4)" onkeydown="pback('np',4,event)">
+        <input class="pc" type="password" maxlength="1" inputmode="numeric" id="np5" oninput="pnav('np',5)" onkeydown="pback('np',5,event)">
       </div>
     </div>
     <button class="btn btn-p" id="btn-reset-pin" onclick="resetPin()">✓ Konfime PIN Nouvo</button>
@@ -843,18 +847,37 @@ html[data-theme="light"] .terminal{background:rgba(248,250,252,.9);border-color:
   <div class="mo-box" onclick="event.stopPropagation()">
     <div class="mo-handle"></div>
     <div class="mo-title">🔐 Chanje Mo De Pas</div>
-    <p style="color:var(--gr);margin-bottom:20px;line-height:1.6">Mo de pas ou ka gen otan karaktè ou vle (minimòm 6).</p>
+    <p style="color:var(--gr);margin-bottom:20px;line-height:1.6">Mo de pas ou dwe gen ant 6 ak 16 karaktè.</p>
     <div class="ig"><label>Mo De Pas Aktyèl</label>
       <input type="password" id="cp-current" placeholder="Mo de pas ou genyen kounye a">
     </div>
     <div class="ig"><label>Nouvo Mo De Pas</label>
-      <input type="password" id="cp-new" placeholder="Minimòm 6 karaktè">
+      <input type="password" id="cp-new" maxlength="16" placeholder="6 a 16 karaktè">
     </div>
     <div class="ig"><label>Konfime Nouvo Mo De Pas</label>
       <input type="password" id="cp-confirm" placeholder="Tape l ankò">
     </div>
     <button class="btn btn-p" id="btn-change-pass" onclick="changeClientPassword()">✓ Chanje Mo De Pas</button>
     <button class="btn btn-o" style="margin-top:10px" onclick="closeMo('mo-change-pass')">Anile</button>
+  </div>
+</div>
+
+<div id="mo-change-pass-ma" class="mo hidden" onclick="closeMo('mo-change-pass-ma')">
+  <div class="mo-box" onclick="event.stopPropagation()">
+    <div class="mo-handle"></div>
+    <div class="mo-title">🔐 Chanje Mo De Pas</div>
+    <p style="color:var(--gr);margin-bottom:20px;line-height:1.6">Mo de pas ou dwe gen ant 6 ak 16 karaktè.</p>
+    <div class="ig"><label>Mo De Pas Aktyèl</label>
+      <input type="password" id="cpm-current" placeholder="Mo de pas ou genyen kounye a">
+    </div>
+    <div class="ig"><label>Nouvo Mo De Pas</label>
+      <input type="password" id="cpm-new" maxlength="16" placeholder="6 a 16 karaktè">
+    </div>
+    <div class="ig"><label>Konfime Nouvo Mo De Pas</label>
+      <input type="password" id="cpm-confirm" placeholder="Tape l ankò">
+    </div>
+    <button class="btn btn-p" id="btn-change-pass-ma" onclick="changeMachandPassword()">✓ Chanje Mo De Pas</button>
+    <button class="btn btn-o" style="margin-top:10px" onclick="closeMo('mo-change-pass-ma')">Anile</button>
   </div>
 </div>
 
@@ -925,12 +948,12 @@ html[data-theme="light"] .terminal{background:rgba(248,250,252,.9);border-color:
     <div class="ig" style="margin:16px 0">
       <label>🔐 PIN Kliyan (6 Chif)</label>
       <div class="pin-row" id="qr-pin-row">
-        <input class="pc" type="password" maxlength="1" inputmode="numeric" id="qr0" oninput="pnav('qr',0)">
-        <input class="pc" type="password" maxlength="1" inputmode="numeric" id="qr1" oninput="pnav('qr',1)">
-        <input class="pc" type="password" maxlength="1" inputmode="numeric" id="qr2" oninput="pnav('qr',2)">
-        <input class="pc" type="password" maxlength="1" inputmode="numeric" id="qr3" oninput="pnav('qr',3)">
-        <input class="pc" type="password" maxlength="1" inputmode="numeric" id="qr4" oninput="pnav('qr',4)">
-        <input class="pc" type="password" maxlength="1" inputmode="numeric" id="qr5" oninput="pnav('qr',5)">
+        <input class="pc" type="password" maxlength="1" inputmode="numeric" id="qr0" oninput="pnav('qr',0)" onkeydown="pback('qr',0,event)">
+        <input class="pc" type="password" maxlength="1" inputmode="numeric" id="qr1" oninput="pnav('qr',1)" onkeydown="pback('qr',1,event)">
+        <input class="pc" type="password" maxlength="1" inputmode="numeric" id="qr2" oninput="pnav('qr',2)" onkeydown="pback('qr',2,event)">
+        <input class="pc" type="password" maxlength="1" inputmode="numeric" id="qr3" oninput="pnav('qr',3)" onkeydown="pback('qr',3,event)">
+        <input class="pc" type="password" maxlength="1" inputmode="numeric" id="qr4" oninput="pnav('qr',4)" onkeydown="pback('qr',4,event)">
+        <input class="pc" type="password" maxlength="1" inputmode="numeric" id="qr5" oninput="pnav('qr',5)" onkeydown="pback('qr',5,event)">
       </div>
       <p style="font-size:11px;color:var(--gr);margin-top:8px">Kliyan dwe antre PIN li pou otorize paiement</p>
     </div>
@@ -950,12 +973,12 @@ html[data-theme="light"] .terminal{background:rgba(248,250,252,.9);border-color:
     </div>
     <p class="pc-desc">Antre PIN 6 chif ou pou konfime tranzaksyon sa</p>
     <div class="pin-row" style="margin-bottom:20px">
-      <input class="pc" type="password" maxlength="1" inputmode="numeric" id="pp0" oninput="pnav('pp',0)">
-      <input class="pc" type="password" maxlength="1" inputmode="numeric" id="pp1" oninput="pnav('pp',1)">
-      <input class="pc" type="password" maxlength="1" inputmode="numeric" id="pp2" oninput="pnav('pp',2)">
-      <input class="pc" type="password" maxlength="1" inputmode="numeric" id="pp3" oninput="pnav('pp',3)">
-      <input class="pc" type="password" maxlength="1" inputmode="numeric" id="pp4" oninput="pnav('pp',4)">
-      <input class="pc" type="password" maxlength="1" inputmode="numeric" id="pp5" oninput="pnav('pp',5)">
+      <input class="pc" type="password" maxlength="1" inputmode="numeric" id="pp0" oninput="pnav('pp',0)" onkeydown="pback('pp',0,event)">
+      <input class="pc" type="password" maxlength="1" inputmode="numeric" id="pp1" oninput="pnav('pp',1)" onkeydown="pback('pp',1,event)">
+      <input class="pc" type="password" maxlength="1" inputmode="numeric" id="pp2" oninput="pnav('pp',2)" onkeydown="pback('pp',2,event)">
+      <input class="pc" type="password" maxlength="1" inputmode="numeric" id="pp3" oninput="pnav('pp',3)" onkeydown="pback('pp',3,event)">
+      <input class="pc" type="password" maxlength="1" inputmode="numeric" id="pp4" oninput="pnav('pp',4)" onkeydown="pback('pp',4,event)">
+      <input class="pc" type="password" maxlength="1" inputmode="numeric" id="pp5" oninput="pnav('pp',5)" onkeydown="pback('pp',5,event)">
     </div>
     <button class="btn btn-p" onclick="confirmPay()">Konfime</button>
     <button class="btn btn-o" style="margin-top:10px" onclick="closeMo('mo-pin-pay')">Anile</button>
@@ -983,7 +1006,7 @@ html[data-theme="light"] .terminal{background:rgba(248,250,252,.9);border-color:
       <div class="ig"><label>Non Konplè</label><input class="inp" id="nc-nom" placeholder="Jean Baptiste"></div>
       <div class="ig"><label>Imel</label><input class="inp" type="email" id="nc-email" placeholder="jean@mail.com"></div>
       <div class="ig"><label>Telefòn</label><input class="inp" type="tel" id="nc-tel" placeholder="+509 XXXX XXXX"></div>
-      <div class="ig"><label>Modpas</label><input class="inp" type="password" id="nc-pass" placeholder="••••••••"></div>
+      <div class="ig"><label>Modpas (6-16 karaktè)</label><input class="inp" type="password" id="nc-pass" maxlength="16" placeholder="••••••••"></div>
       <div class="ig"><label>Balans Inisyal (HTG)</label><input class="inp" type="number" id="nc-bal" placeholder="0" value="0" min="0"></div>
       <button class="btn btn-p" id="btn-nc" onclick="createClientAdmin()">✨ Kreye Kont + Carte</button>
       <button class="btn btn-o" onclick="closeMo('mo-new-cl')">Anile</button>
@@ -1019,7 +1042,7 @@ html[data-theme="light"] .terminal{background:rgba(248,250,252,.9);border-color:
       <div class="ig"><label>Non Propriétè</label><input class="inp" id="nm-nom" placeholder="Marie Jean"></div>
       <div class="ig"><label>Imel</label><input class="inp" type="email" id="nm-email" placeholder="boutik@mail.com"></div>
       <div class="ig"><label>Telefòn</label><input class="inp" type="tel" id="nm-tel" placeholder="+509 XXXX XXXX"></div>
-      <div class="ig"><label>Modpas</label><input class="inp" type="password" id="nm-pass" placeholder="••••••••"></div>
+      <div class="ig"><label>Modpas (6-16 karaktè)</label><input class="inp" type="password" id="nm-pass" maxlength="16" placeholder="••••••••"></div>
       <button class="btn btn-p" id="btn-nm" onclick="createMachandAdmin()">✨ Anrejistre Machand</button>
       <button class="btn btn-o" onclick="closeMo('mo-new-ma')">Anile</button>
     </div>
@@ -1129,12 +1152,12 @@ html[data-theme="light"] .terminal{background:rgba(248,250,252,.9);border-color:
       <div class="ig">
         <label>PIN 6 Chif Kliyan (pou konfime)</label>
         <div class="pin-row">
-          <input class="pc" type="password" maxlength="1" inputmode="numeric" id="sp0" oninput="pnav('sp',0)">
-          <input class="pc" type="password" maxlength="1" inputmode="numeric" id="sp1" oninput="pnav('sp',1)">
-          <input class="pc" type="password" maxlength="1" inputmode="numeric" id="sp2" oninput="pnav('sp',2)">
-          <input class="pc" type="password" maxlength="1" inputmode="numeric" id="sp3" oninput="pnav('sp',3)">
-          <input class="pc" type="password" maxlength="1" inputmode="numeric" id="sp4" oninput="pnav('sp',4)">
-          <input class="pc" type="password" maxlength="1" inputmode="numeric" id="sp5" oninput="pnav('sp',5)">
+          <input class="pc" type="password" maxlength="1" inputmode="numeric" id="sp0" oninput="pnav('sp',0)" onkeydown="pback('sp',0,event)">
+          <input class="pc" type="password" maxlength="1" inputmode="numeric" id="sp1" oninput="pnav('sp',1)" onkeydown="pback('sp',1,event)">
+          <input class="pc" type="password" maxlength="1" inputmode="numeric" id="sp2" oninput="pnav('sp',2)" onkeydown="pback('sp',2,event)">
+          <input class="pc" type="password" maxlength="1" inputmode="numeric" id="sp3" oninput="pnav('sp',3)" onkeydown="pback('sp',3,event)">
+          <input class="pc" type="password" maxlength="1" inputmode="numeric" id="sp4" oninput="pnav('sp',4)" onkeydown="pback('sp',4,event)">
+          <input class="pc" type="password" maxlength="1" inputmode="numeric" id="sp5" oninput="pnav('sp',5)" onkeydown="pback('sp',5,event)">
         </div>
       </div>
       <p style="font-size:11px;color:var(--gr);margin:8px 0 12px">Kliyan dwe antre PIN li pou otorize paiement sa.</p>
@@ -1876,12 +1899,13 @@ async function syncMyWallet() {
     var uid = auth_fire.currentUser.uid;
     var ref = db_fire.collection('wallets').doc(uid);
 
-    var myBalans = null;
+    var myBalans = null, myBloke = false;
     if (STATE.role === 'client' && STATE.user) {
       myBalans = STATE.user.balans || 0;
+      myBloke = !!STATE.user.bloke;
     } else {
       var kl = (DB.kliyan || []).find(function(k){ return k.authUid === uid; });
-      if (kl) myBalans = kl.balans || 0;
+      if (kl) { myBalans = kl.balans || 0; myBloke = !!kl.bloke; }
     }
     if (myBalans === null) return;
 
@@ -1904,7 +1928,9 @@ async function syncMyWallet() {
       try { renderClTx(); } catch(e) {}
     }
 
-    await ref.set({ balans: myBalans, updated: Date.now() }, { merge: true });
+    /* bloke: TOUJOU voye estati aktyèl la (pa gen konfli posib tankou balans,
+       paske se AyiPay sèl ki chanje valè sa a — Wing sèlman li li). */
+    await ref.set({ balans: myBalans, bloke: myBloke, updated: Date.now() }, { merge: true });
   } catch(e) { console.warn('syncMyWallet echwe:', e && e.message); }
 }
 
@@ -1976,7 +2002,7 @@ async function syncClientWalletAsAdmin(kliyan) {
       _lsSave(DB);
     }
 
-    await ref.set({ balans: localBalans, updated: Date.now() }, { merge: true });
+    await ref.set({ balans: localBalans, bloke: !!kliyan.bloke, updated: Date.now() }, { merge: true });
   } catch(e) { console.warn('syncClientWalletAsAdmin echwe:', e && e.message); }
 }
 /* Koute chanjman an tan reyèl sou pwòp wallet mwen (Wing ka dediwi l dirèkteman) */
@@ -2423,6 +2449,36 @@ function showDeleteClientModal() {
     toast('✅ Klyan ak kat li yo efase', 'success');
   }
 }
+function showDeleteOldReceiptsModal() {
+  var totalTx = (DB.tx || []).length;
+  var daysStr = prompt('Efase resi/tranzaksyon ki gen plis pase konbyen jou?\n\n(Egzanp: 90 pou efase tout sa ki gen plis pase 90 jou. Antre 0 pou EFASE TOUT resi yo.)', '90');
+  if (daysStr === null) return;
+  var days = parseInt(daysStr, 10);
+  if (isNaN(days) || days < 0) { toast('❌ Antre yon nimewo jou valid', 'error'); return; }
+
+  var toKeep, removedCount;
+  if (days === 0) {
+    toKeep = [];
+    removedCount = totalTx;
+  } else {
+    var cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+    toKeep = (DB.tx || []).filter(function(t){ return (t.date || 0) > cutoff; });
+    removedCount = totalTx - toKeep.length;
+  }
+
+  if (removedCount <= 0) { toast('ℹ️ Pa gen ansyen resi pou efase', 'info'); return; }
+
+  if (confirm('✋ Konfime efase ' + removedCount + ' resi/tranzaksyon' + (days===0 ? ' (TOUT REZI YO)' : (' ki gen plis pase ' + days + ' jou')) + '?\n\nAksyon sa a pa ka anile!')) {
+    DB.tx = toKeep;
+    localLog('🗑️ ' + removedCount + ' resi efase (limit: ' + (days===0?'tout':days+'j') + ')');
+    _lsSave(DB);
+    manualSync();
+    try { renderClTx(); } catch(e) {}
+    try { renderIstwaClient(); } catch(e) {}
+    try { renderMaTx(STATE.user && STATE.user.id); } catch(e) {}
+    toast('✅ ' + removedCount + ' resi efase', 'success');
+  }
+}
 
 /* ADMIN NOTIFICATIONS */
 var LAST_RETRAIT_COUNT = 0;
@@ -2484,7 +2540,35 @@ function show(id) {
   }
 }
 function goWelcome() { STATE.role=null; STATE.user=null; show('scr-welcome'); }
-function goLogin(role) { show('scr-login-'+role); }
+function goLogin(role) { show('scr-login-'+role); applyRememberedEmail(role); }
+
+/* ═══ SONJE IMEL LA (rediwi tray koneksyon) ═══
+   Objektif: moun nan pa oblije retape imel li chak fwa li fèmen/re-ouvri app la —
+   sèlman modpas li chak fwa. Imel la ka efase nenpòt lè ak bouton "✕ Chanje". */
+function applyRememberedEmail(role) {
+  var key = 'ayipay_remember_email_' + role;
+  var saved = localStorage.getItem(key);
+  var wrap = document.getElementById(role+'-email-wrap');
+  if (!wrap) return;
+  if (saved) {
+    wrap.innerHTML = '<label>Imel</label><div class="remembered-email-chip">'+
+      '<span>'+saved.replace(/</g,'&lt;')+'</span>'+
+      '<button type="button" class="chip-x" onclick="forgetEmail(\''+role+'\')">✕ Chanje</button>'+
+      '<input type="hidden" id="'+role+'-email" value="'+saved.replace(/"/g,'&quot;')+'"></div>';
+    var passInput = document.getElementById(role+'-pass');
+    if (passInput) setTimeout(function(){ passInput.focus(); }, 50);
+  } else {
+    wrap.innerHTML = '<label>Imel</label><input class="inp" type="email" id="'+role+'-email" placeholder="'+
+      (role==='cl' ? 'ou@mail.com' : 'boutik@mail.com')+'" autocomplete="email">';
+  }
+}
+function forgetEmail(role) {
+  localStorage.removeItem('ayipay_remember_email_' + role);
+  applyRememberedEmail(role);
+}
+function rememberEmail(role, email) {
+  if (email) localStorage.setItem('ayipay_remember_email_' + role, email);
+}
 
 /* MODALS */
 function openMo(id) {
@@ -2536,11 +2620,26 @@ function closeMo(id) { document.getElementById(id).classList.add('hidden'); }
 /* PIN NAV */
 function pnav(prefix, i, maxLen) {
   var el = document.getElementById(prefix+i);
+  if (el) {
+    // Aksepte sèlman chif — anpeche lèt/senbòl antre nan bwat la
+    el.value = (el.value || '').replace(/[^0-9]/g, '').slice(0, 1);
+  }
   // Support pase longè a dirèkteman (default: 4 pou 'ad', 6 pou tout lòt)
   var max = (maxLen != null) ? (maxLen - 1) : (prefix==='ad' ? 3 : 5);
   if (el && el.value && i < max) {
     var next = document.getElementById(prefix+(i+1));
-    if (next) next.focus();
+    if (next) { next.focus(); next.select && next.select(); }
+  }
+}
+function pback(prefix, i, e, maxLen) {
+  // Pèmèt moun nan korije/chanje kòd li: si li peze Backspace sou yon bwat ki VID,
+  // fokis la ale sou bwat anvan an epi efase l. Sa a se pati ki te manke a.
+  if (!e || e.key !== 'Backspace') return;
+  var el = document.getElementById(prefix+i);
+  if (el && el.value === '' && i > 0) {
+    var prev = document.getElementById(prefix+(i-1));
+    if (prev) { prev.value=''; prev.focus(); prev.select && prev.select(); }
+    e.preventDefault();
   }
 }
 function getPin(prefix, len) {
@@ -3055,7 +3154,7 @@ function signupClient() {
   var pass   = document.getElementById('sc-pass').value;
   
   if(!nom||!email||!pass){ toast('Ranpli tout champ yo','error'); return; }
-  if(pass.length<6){ toast('Modpas min. 6 karaktè','error'); return; }
+  if(pass.length<6 || pass.length>16){ toast('Modpas dwe gen ant 6 ak 16 karaktè','error'); return; }
   if(DB.kliyan.find(function(k){ return k.email===email; })){ toast('Imel sa déjà egziste','error'); return; }
   
   setBtn('btn-sc',true);
@@ -3141,6 +3240,7 @@ function loginClient() {
   try {
     var found = DB.kliyan.find(function(k){ return k.email===email && k.pass===pass; });
     if(!found){ toast('Imel oswa modpas enkorèk','error'); setBtn('btn-cl-login',false,'Konekte'); return; }
+    rememberEmail('cl', email);
     STATE.role='client'; STATE.user=found;
     checkAndExpireCarte(STATE.user);
     show('scr-dash-cl');
@@ -3202,6 +3302,7 @@ function loginMachand() {
   setBtn('btn-ma-login',true);
   var found = DB.machand.find(function(m){ return m.email===email && m.pass===pass; });
   if(!found){ toast('Imel oswa modpas enkorèk','error'); setBtn('btn-ma-login',false,'Konekte'); return; }
+  rememberEmail('ma', email);
   // Bay ansyen kont machann ki pa t gen ID yo youn otomatikman
   if (!found.machandID) {
     found.machandID = genMachandID();
@@ -3318,6 +3419,7 @@ function blokeKart() {
   STATE.user.bloke = true;
   DB.kliyan = DB.kliyan.map(function(k){ if(k.id===STATE.user.id) k.bloke=true; return k; });
   saveDB(DB); // async - Firebase
+  try { syncMyWallet(); } catch(e) {} // imedyatman — pou Wing pa aksepte acha ak yon kat fenk bloke
   document.getElementById('cl-status').innerHTML = '✗ Kart Bloke';
   document.getElementById('cl-status').className = 'bal-status bloke';
   closeMo('mo-bloke-cl');
@@ -3331,6 +3433,7 @@ function deblokeKart() {
   STATE.user.bloke = false;
   DB.kliyan = DB.kliyan.map(function(k){ if(k.id===STATE.user.id) k.bloke=false; return k; });
   saveDB(DB); // async - Firebase
+  try { syncMyWallet(); } catch(e) {} // imedyatman — pou Wing rekonèt kat la debloke tousuit
   document.getElementById('cl-status').innerHTML = '✓ Kart Aktif';
   document.getElementById('cl-status').className = 'bal-status ok';
   closeMo('mo-debloke-cl');
@@ -3360,7 +3463,7 @@ async function changeClientPassword() {
   var np = document.getElementById('cp-new').value;
   var confirm = document.getElementById('cp-confirm').value;
   if(!current){ toast('Antre mo de pas aktyèl ou','error'); return; }
-  if(np.length<6){ toast('Nouvo mo de pas la dwe gen omwen 6 karaktè','error'); return; }
+  if(np.length<6 || np.length>16){ toast('Nouvo mo de pas la dwe gen ant 6 ak 16 karaktè','error'); return; }
   if(np!==confirm){ toast('De mo de pas yo pa menm','error'); return; }
   var kl = DB.kliyan.find(function(k){ return k.id===STATE.user.id; });
   if(!kl){ toast('Erè: kont pa jwenn','error'); return; }
@@ -3397,6 +3500,36 @@ async function changeClientPassword() {
     toast(msg,'error');
   } finally {
     setBtn('btn-change-pass',false,'✓ Chanje Mo De Pas');
+  }
+}
+
+async function changeMachandPassword() {
+  if(!STATE.user) return;
+  var current = document.getElementById('cpm-current').value;
+  var np = document.getElementById('cpm-new').value;
+  var confirmP = document.getElementById('cpm-confirm').value;
+  if(!current){ toast('Antre mo de pas aktyèl ou','error'); return; }
+  if(np.length<6 || np.length>16){ toast('Nouvo mo de pas la dwe gen ant 6 ak 16 karaktè','error'); return; }
+  if(np!==confirmP){ toast('De mo de pas yo pa menm','error'); return; }
+  var ma = DB.machand.find(function(m){ return m.id===STATE.user.id; });
+  if(!ma){ toast('Erè: kont pa jwenn','error'); return; }
+  if(current!==ma.pass){ toast('Mo de pas aktyèl la pa kòrèk','error'); return; }
+
+  setBtn('btn-change-pass-ma',true);
+  try {
+    ma.pass = np;
+    STATE.user.pass = np;
+    _lsSave(DB);
+    await saveDBCritical(DB);
+    toast('✅ Mo de pas ou chanje avèk siksè','success');
+    closeMo('mo-change-pass-ma');
+    document.getElementById('cpm-current').value='';
+    document.getElementById('cpm-new').value='';
+    document.getElementById('cpm-confirm').value='';
+  } catch(e) {
+    toast('Erè: ' + (e && e.message ? e.message : e), 'error');
+  } finally {
+    setBtn('btn-change-pass-ma',false,'✓ Chanje Mo De Pas');
   }
 }
 
@@ -3702,7 +3835,7 @@ function createClientAdmin() {
   var balans = parseInt(document.getElementById('nc-bal').value)||0;
   
   if(!nom||!email||!pass){ toast('Ranpli Non, Imel ak Modpas','error'); return; }
-  if(pass.length<6){ toast('Modpas min. 6 karaktè','error'); return; }
+  if(pass.length<6 || pass.length>16){ toast('Modpas dwe gen ant 6 ak 16 karaktè','error'); return; }
   if(DB.kliyan.find(function(k){ return k.email===email; })){ toast('Imel sa déjà egziste','error'); return; }
   
   setBtn('btn-nc',true);
@@ -3737,7 +3870,7 @@ function createMachandAdmin() {
   var pass   = document.getElementById('nm-pass').value;
   
   if(!boutik||!email||!pass){ toast('Ranpli champ obligatwa yo','error'); return; }
-  if(pass.length<6){ toast('Modpas min. 6 karaktè','error'); return; }
+  if(pass.length<6 || pass.length>16){ toast('Modpas dwe gen ant 6 ak 16 karaktè','error'); return; }
   if(DB.machand.find(function(m){ return m.email===email; })){ toast('Imel sa déjà egziste','error'); return; }
   
   setBtn('btn-nm',true);
@@ -4708,6 +4841,7 @@ async function checkHaitiAccess() {
         <button class="btn btn-r" style="flex:1;font-size:12px" onclick="showDeleteCardModal()">❌ Efase Kat</button>
         <button class="btn btn-r" style="flex:1;font-size:12px" onclick="showDeleteClientModal()">❌ Efase Klyan</button>
       </div>
+      <button class="btn btn-r" style="width:100%;font-size:12px;margin-top:8px" onclick="showDeleteOldReceiptsModal()">🗑️ Efase Vye Resi/Tranzaksyon</button>
     </div>
 
     <div id="admin-pay-config-section" class="ig" style="margin-top:8px;display:none">
